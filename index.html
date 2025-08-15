@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人博客</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --background-color: #f5f7fa;
+            --text-color: #333;
+            --card-color: #fff;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+        }
+
+        header {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        nav {
+            background-color: var(--card-color);
+            box-shadow: var(--box-shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            list-style: none;
+            overflow-x: auto;
+            padding: 0 1rem;
+        }
+
+        .tab {
+            padding: 1.5rem 2rem;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--primary-color);
+        }
+
+        .tab:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        .content-section {
+            display: none;
+            padding: 3rem 0;
+        }
+
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .card {
+            background-color: var(--card-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .card-content {
+            padding: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--secondary-color);
+        }
+
+        .card-text {
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+        }
+
+        footer {
+            background-color: var(--secondary-color);
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .social-link {
+            color: white;
+            font-size: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .social-link:hover {
+            color: var(--primary-color);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .tabs {
+                justify-content: flex-start;
+            }
+
+            .card-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>我的个人博客</h1>
+            <p class="tagline">分享我的工作、爱好和生活</p>
+        </div>
+    </header>
+
+    <nav>
+        <div class="container">
+            <ul class="tabs">
+                <li class="tab active" data-tab="work">工作</li>
+                <li class="tab" data-tab="hobbies">爱好</li>
+                <li class="tab" data-tab="life">生活</li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section id="work" class="content-section active">
+            <h2>工作</h2>
+            <p>这里展示我的工作经历、项目经验和专业技能。</p>
+            <div class="card-container">
+                <div class="card">
+                    <img src="https://via.placeholder.com/600x400?text=Project+1" alt="项目1" class="card-img">
+                    <div class="card-content">
+                        <h3 class="card-title">项目一</h3>
+                        <p class="card-text">这是我参与的一个重要项目，负责前端开发和用户界面设计。</p>
+                        <a href="#" class="btn">查看详情</a>
+                    </div>
+                </div>
+                <div class="card">
+                    <img src="https://via.placeholder.com/600x400?text=Project+2" alt="项目2" class="card-img">
+                    <div class="card-content">
+                        <h3 class="card-title">项目二</h3>
+                        <p class="card-text">这是一个个人项目，展示了我的全栈开发能力和创新思维。</p>
+                        <a href="#" class="btn">查看详情</a>
+                    </div>
+                </div>
+                <div class="card">
+                    <img src="https://via.placeholder.com/600x400?text=Skills" alt="技能" class="card-img">
+                    <div class="card-content">
+                        <h3 class="card-title">专业技能</h3>
+                        <p class="card-text">展示我的技术栈和专业能力，包括编程语言、框架和工具等。</p>
+                        <a href="#" class="btn">查看详情</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="hobbies" class="content-section">
+            <h2>爱好</h2>
+            <p>这里分享我的兴趣爱好和个人生活中的精彩瞬间。</p>
+            <div class="card-container">
+                <div class="card">
+                    <img src="https://via.placeholder.com/600x400?text=Reading" alt="阅读" class="card-img">
+                    <div class="card-content">
+                        <h3 class="card-title">阅读</h3>
+                        <p class="card-text">我喜欢阅读各类书籍，尤其是技术书籍和科幻小说。</p>
+                        <a href="#" class="btn">查看我的书单</a>
+                    </div>
+                </div>
+                <div class="card">
+                    <img src="https://via.placeholder.com/600x400?text=Travel" alt="旅行" class="card-img">
+                    <div class="card-content">
+                        <h3 class="card-title">旅行</h3>
+                        <p class="card-text">探索不同的地方，体验不同的文化和风景。</p>
+                        <a href="#" class="btn">查看我的旅行足迹</a>
+                    </div>
+                </div>
+                <div class="card">
+                    <img src="https://via.placeholder.com/600x400?text=Coding" alt="编程" class="card-img">
+                    <div class="card-content">
+                        <h3 class="card-title">编程</h3>
+                        <p class="card-text">编程不仅是我的工作，也是我的爱好。我喜欢学习新技术和解决挑战性问题。</p>
+                        <a href="#" class="btn">查看我的代码项目</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="life" class="content-section">
+            <h2>生活</h2>
+            <p>这里记录我的日常生活、感悟和思考。</p>
+            <div class="card-container">
+                <div class="card">
+                    <img src="https://via.placeholder.com/600x400?text=Daily+Life" alt="日常生活" class="card-img">
+                    <div class="card-content">
+                        <h3 class="card-title">日常生活</h3>
+                        <p class="card-text">分享我的日常生活片段和感悟。</p>
+                        <a href="#" class="btn">查看更多</a>
+                    </div>
+                </div>
+                <div class="card">
+                    <img src="https://via.placeholder.com/600x400?text=Photography" alt="摄影" class="card-img">
+                    <div class="card-content">
+                        <h3 class="card-title">摄影</h3>
+                        <p class="card-text">我喜欢用相机记录生活中的美好瞬间。</p>
+                        <a href="#" class="btn">查看我的摄影作品</a>
+                    </div>
+                </div>
+                <div class="card">
+                    <img src="https://via.placeholder.com/600x400?text=Food" alt="美食" class="card-img">
+                    <div class="card-content">
+                        <h3 class="card-title">美食</h3>
+                        <p class="card-text">探索各种美食，也喜欢自己动手烹饪。</p>
+                        <a href="#" class="btn">查看我的美食分享</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 我的个人博客. 保留所有权利。</p>
+            <div class="social-links">
+                <a href="#" class="social-link">GitHub</a>
+                <a href="#" class="social-link">Twitter</a>
+                <a href="#" class="social-link">LinkedIn</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取所有标签和内容区域
+            const tabs = document.querySelectorAll('.tab');
+            const contentSections = document.querySelectorAll('.content-section');
+
+            // 为每个标签添加点击事件
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // 移除所有标签的active类
+                    tabs.forEach(t => t.classList.remove('active'));
+                    // 为当前点击的标签添加active类
+                    this.classList.add('active');
+
+                    // 隐藏所有内容区域
+                    contentSections.forEach(section => section.classList.remove('active'));
+                    // 显示对应的内容区域
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
