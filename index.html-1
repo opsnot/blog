@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的个人博客</title>
+<style>
+    body {
+        margin: 0;
+        background: #f8f9fa;
+        font-family: "Microsoft YaHei", sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+    }
+    h1 {
+        margin-bottom: 20px;
+        color: #333;
+    }
+    svg {
+        max-width: 400px;
+        height: auto;
+    }
+    a path {
+        transition: transform 0.3s, fill 0.3s;
+        transform-origin: center;
+        cursor: pointer;
+    }
+    a:hover path {
+        transform: scale(1.05);
+        opacity: 0.85;
+    }
+</style>
+</head>
+<body>
+
+<h1>我的个人博客</h1>
+
+<svg viewBox="0 0 200 200">
+    <!-- 工作 -->
+    <a href="work.html">
+        <path d="M100,100 L100,0 A100,100 0 0,1 186.6,50 Z" fill="#ffce54" />
+    </a>
+    <!-- 爱好 -->
+    <a href="hobby.html">
+        <path d="M100,100 L186.6,50 A100,100 0 0,1 100,200 Z" fill="#4fc1e9" />
+    </a>
+    <!-- 生活 -->
+    <a href="life.html">
+        <path d="M100,100 L100,200 A100,100 0 0,1 100,0 Z" fill="#a0d468" />
+    </a>
+    <!-- 圆心小太极 -->
+    <circle cx="100" cy="100" r="20" fill="white" stroke="#333" stroke-width="2"/>
+    <circle cx="100" cy="90" r="10" fill="#333"/>
+    <circle cx="100" cy="110" r="10" fill="white" stroke="#333" stroke-width="1"/>
+</svg>
+
+<p style="color:#666; font-size:0.9em;">© 2025 我的个人博客 | 道生一，一生二，二生三，三生万物</p>
+
+</body>
+</html>
