@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
+  <id>https://blog.opsnot.com</id>
+  <title>运维不加班</title>
+  <updated>2025-10-25T21:36:57.200807+08:00</updated>
+  <author>
+    <name>运维不加班</name>
+  </author>
+  <link href="https://blog.opsnot.com" rel="alternate"/>
+  <link href="https://blog.opsnot.com/atom.xml" rel="self"/>
+  <generator>Custom CMS v1.0</generator>
+  <subtitle>运维不加班 的个人博客，欢迎订阅。</subtitle>
+  <entry>
+    <id>https://blog.opsnot.com/life/why-restart-blog-after-12-years.html</id>
+    <title>时隔12年，我为什么要重新开始写博客</title>
+    <updated>2025-10-25T21:36:57.200807+08:00</updated>
+    <link href="https://blog.opsnot.com/life/why-restart-blog-after-12-years.html"/>
+    <summary>时隔12年，作者决定重新开始写博客，分享多年的运维经验，讨论运维全场景、生活趣事和折腾爱好，希望能与志同道合的朋友交流。</summary>
+    <published>2025-10-25T19:53:59.082866+08:00</published>
+  </entry>
+</feed>

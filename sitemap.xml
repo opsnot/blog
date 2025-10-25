@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<url>
+ <loc>https://blog.opsnot.com</loc>
+ <lastmod>2025-10-25</lastmod>
+</url>
+<url>
+ <loc>https://blog.opsnot.com/friends.html</loc>
+ <changefreq>monthly</changefreq>
+</url>
+<url>
+ <loc>https://blog.opsnot.com/life/index.html</loc>
+ <lastmod>2025-10-25</lastmod>
+</url>
+<url>
+ <loc>https://blog.opsnot.com/life/why-restart-blog-after-12-years.html</loc>
+ <lastmod>2025-10-25</lastmod>
+</url>
+</urlset>
