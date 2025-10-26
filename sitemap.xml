@@ -9,8 +9,16 @@
  <changefreq>monthly</changefreq>
 </url>
 <url>
+ <loc>https://blog.opsnot.com/tools/index.html</loc>
+ <lastmod>2025-10-26</lastmod>
+</url>
+<url>
  <loc>https://blog.opsnot.com/life/index.html</loc>
  <lastmod>2025-10-25</lastmod>
+</url>
+<url>
+ <loc>https://blog.opsnot.com/life/clean-easy-random-passwd-generator.html</loc>
+ <lastmod>2025-10-26</lastmod>
 </url>
 <url>
  <loc>https://blog.opsnot.com/life/why-restart-blog-after-12-years.html</loc>

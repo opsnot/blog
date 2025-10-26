@@ -8,7 +8,14 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>Custom CMS v1.0</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 25 Oct 2025 22:23:11 +0800</lastBuildDate>
+    <lastBuildDate>Sun, 26 Oct 2025 13:17:02 +0800</lastBuildDate>
+    <item>
+      <title>一个干净好用的随机密码生成器</title>
+      <link>https://blog.opsnot.com/life/clean-easy-random-passwd-generator.html</link>
+      <description>RPG.Opsnot.com提供了一个操作简便、界面干净的密码生成工具，支持1到128位的密码长度，全球CDN加速确保快速访问，无广告设计让用户使用更顺畅。</description>
+      <guid isPermaLink="false">https://blog.opsnot.com/life/clean-easy-random-passwd-generator.html</guid>
+      <pubDate>Sun, 26 Oct 2025 13:06:53 +0800</pubDate>
+    </item>
     <item>
       <title>时隔12年，我为什么要重新开始写博客</title>
       <link>https://blog.opsnot.com/life/why-restart-blog-after-12-years.html</link>
