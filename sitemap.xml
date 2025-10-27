@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
  <loc>https://blog.opsnot.com</loc>
- <lastmod>2025-10-26</lastmod>
+ <lastmod>2025-10-27</lastmod>
 </url>
 <url>
  <loc>https://blog.opsnot.com/friends.html</loc>
@@ -15,6 +15,10 @@
 <url>
  <loc>https://blog.opsnot.com/life/index.html</loc>
  <lastmod>2025-10-25</lastmod>
+</url>
+<url>
+ <loc>https://blog.opsnot.com/tools/mortgage-calculator-tools.html</loc>
+ <lastmod>2025-10-27</lastmod>
 </url>
 <url>
  <loc>https://blog.opsnot.com/life/clean-easy-random-passwd-generator.html</loc>

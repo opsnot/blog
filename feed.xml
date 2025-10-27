@@ -8,7 +8,14 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>Custom CMS v1.0</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 26 Oct 2025 13:17:02 +0800</lastBuildDate>
+    <lastBuildDate>Mon, 27 Oct 2025 16:30:02 +0800</lastBuildDate>
+    <item>
+      <title>今天是个好日子，我写了个房贷计算器</title>
+      <link>https://blog.opsnot.com/tools/mortgage-calculator-tools.html</link>
+      <description>这篇文章介绍了作者开发的房贷计算器工具，支持纯商贷、公积金、组合贷三种模式，设计简洁易用，旨在为用户提供清爽的房贷计算体验。</description>
+      <guid isPermaLink="false">https://blog.opsnot.com/tools/mortgage-calculator-tools.html</guid>
+      <pubDate>Mon, 27 Oct 2025 16:23:39 +0800</pubDate>
+    </item>
     <item>
       <title>一个干净好用的随机密码生成器</title>
       <link>https://blog.opsnot.com/life/clean-easy-random-passwd-generator.html</link>

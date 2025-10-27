@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
   <id>https://blog.opsnot.com</id>
   <title>运维不加班</title>
-  <updated>2025-10-26T13:17:02.845267+08:00</updated>
+  <updated>2025-10-27T16:30:02.928313+08:00</updated>
   <author>
     <name>运维不加班</name>
   </author>
@@ -10,6 +10,14 @@
   <link href="https://blog.opsnot.com/atom.xml" rel="self"/>
   <generator>Custom CMS v1.0</generator>
   <subtitle>运维不加班 的个人博客，欢迎订阅。</subtitle>
+  <entry>
+    <id>https://blog.opsnot.com/tools/mortgage-calculator-tools.html</id>
+    <title>今天是个好日子，我写了个房贷计算器</title>
+    <updated>2025-10-27T16:30:02.928313+08:00</updated>
+    <link href="https://blog.opsnot.com/tools/mortgage-calculator-tools.html"/>
+    <summary>这篇文章介绍了作者开发的房贷计算器工具，支持纯商贷、公积金、组合贷三种模式，设计简洁易用，旨在为用户提供清爽的房贷计算体验。</summary>
+    <published>2025-10-27T16:23:39.932541+08:00</published>
+  </entry>
   <entry>
     <id>https://blog.opsnot.com/life/clean-easy-random-passwd-generator.html</id>
     <title>一个干净好用的随机密码生成器</title>
