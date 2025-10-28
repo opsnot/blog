@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="applicable-device" content="pc,mobile">
+  <meta name="keywords" content="kubectl命令, Kubernetes实战, K8s命令汇总, Pod管理, 容器调试, 资源扩缩容, 滚动更新, 配置管理, 端口转发, 节点操作, 资源监控, 事件查看, 标签操作, 文件复制, 命名空间操作" />
+  <meta name="description" content="这篇干货分享汇集了多年K8s实战中高频使用的命令，涵盖Pod管理、容器调试、资源扩缩容等，帮助你提升操作效率，快速解决问题。" />
+  <link rel="alternate" type="application/rss+xml" title="运维不加班" href="https://blog.opsnot.com/feed.xml" />
+  <link rel="stylesheet" href="https://blog.opsnot.com/static/posts/css/ops-coffee.min.css" type="text/css" />
+
+  <!-- Begin SEO tag -->
+  <title>K8s高频命令实操手册，值得收藏！</title>
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:site_name" content="运维不加班" />
+  <meta property="og:url" content="https://blog.opsnot.comtools/kubernetes-commands-for-daily-use.html" />
+  <meta property="og:title" content="K8s高频命令实操手册，值得收藏！" />
+  <meta property="og:description" content="这篇干货分享汇集了多年K8s实战中高频使用的命令，涵盖Pod管理、容器调试、资源扩缩容等，帮助你提升操作效率，快速解决问题。" />
+  <link rel="canonical" href="https://blog.opsnot.comtools/kubernetes-commands-for-daily-use.html" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "K8s高频命令实操手册，值得收藏！",
+    "description": "这篇干货分享汇集了多年K8s实战中高频使用的命令，涵盖Pod管理、容器调试、资源扩缩容等，帮助你提升操作效率，快速解决问题。",
+    "url": "https://blog.opsnot.comtools/kubernetes-commands-for-daily-use.html",
+    "author": {
+      "@type": "Person",
+      "name": "运维不加班"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "运维不加班",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://blog.opsnot.com/favicon.ico"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://blog.opsnot.comtools/kubernetes-commands-for-daily-use.html"
+    }
+  }
+  </script>
+  <!-- End SEO tag -->
+</head>
+
+<body>
+  <div class="header">
+    <div class="menu-button">&#9776; 
+        <span class="menu-title">运维不加班</span>
+    </div> 
+
+    <div class="container">
+      <nav class="header-site">
+        <ul>
+          <li><a href="/">首页</a></li>
+            <li><a href="/tag/index.html" target="_self">标签</a></li>
+            <li><a href="/archive.html" target="_self">归档</a></li>
+          <li class="search"><a href="/search.html" target="_self" aria-label="搜索">🔍</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <header>
+    <div class="container">
+      <a href="/">
+        <div class="name">运维不加班</div>
+        <div class="slogan">唯有热爱，方能成就非凡，若无痴迷，岂能窥得天机</div>
+      </a>
+    </div>
+  </header>
+
+  <div id="content-wrap">
+    <div class="container">
+        <h1 id="art-title">K8s高频命令实操手册，值得收藏！</h1>
+
+        <p>干了多年k8s，把天天用的命令整理出来，都是实战中真正高频的操作。复制就能用，不整那些花里胡哨的。</p>
+<blockquote>
+<p>本文来自 <a href="https://blog.opsnot.com/" target="_blank">opsnot.com</a>，转载请注明出处。</p>
+</blockquote>
+<h2 id="1-">1. 查看资源 - 看东西</h2>
+<pre class="codehilite"><code class="language-bash"># 查Pod，带IP和节点信息，这个最常用
+kubectl get pod -o wide -n opsnot
+
+# 看所有命名空间的Pod
+kubectl get pod -A
+
+# 筛选某个节点上的Pod - opsnot.com
+kubectl get pod -A --field-selector spec.nodeName=node-01
+
+# 查看Pod详情，排查问题必备
+kubectl describe pod &lt;pod-name&gt; -n &lt;namespace&gt;
+
+# 看Pod日志，加-f实时刷新
+kubectl logs &lt;pod-name&gt; -n opsnot -f
+
+# 多容器Pod看指定容器日志
+kubectl logs &lt;pod-name&gt; -c &lt;container-name&gt; -n &lt;namespace&gt;
+
+# 看之前挂掉的容器日志
+kubectl logs &lt;pod-name&gt; --previous</code></pre>
+
+
+<h2 id="2-">2. 进容器 - 调试</h2>
+<pre class="codehilite"><code class="language-bash"># 进Pod执行命令，最常用sh或bash
+kubectl exec -it &lt;pod-name&gt; -n opsnot -- /bin/sh
+
+# 多容器指定进哪个 - opsnot.com
+kubectl exec -it &lt;pod-name&gt; -c &lt;container-name&gt; -n &lt;namespace&gt; -- /bin/bash
+
+# 不进容器直接执行命令
+kubectl exec &lt;pod-name&gt; -n &lt;namespace&gt; -- ls -la /app</code></pre>
+
+
+<h2 id="3-">3. 删除重建 - 常规操作</h2>
+<pre class="codehilite"><code class="language-bash"># 删Pod，ReplicaSet会自动重建
+kubectl delete pod &lt;pod-name&gt; -n opsnot
+
+# 强制删除卡住的Pod
+kubectl delete pod &lt;pod-name&gt; -n &lt;namespace&gt; --force --grace-period=0
+
+# 删除deployment（慎用）- opsnot.com
+kubectl delete deployment &lt;deployment-name&gt; -n &lt;namespace&gt;
+
+# 批量删除某个标签的Pod
+kubectl delete pod -l app=opsnot -n &lt;namespace&gt;</code></pre>
+
+
+<h2 id="4-">4. 扩缩容 - 调资源</h2>
+<pre class="codehilite"><code class="language-bash"># 手动扩容到3个副本
+kubectl scale deployment opsnot-app --replicas=3 -n &lt;namespace&gt;
+
+# 缩到0，相当于停服务 - opsnot.com
+kubectl scale deployment &lt;deployment-name&gt; --replicas=0 -n &lt;namespace&gt;</code></pre>
+
+
+<h2 id="5-">5. 滚动更新 - 发版</h2>
+<pre class="codehilite"><code class="language-bash"># 更新镜像版本
+kubectl set image deployment/&lt;deployment-name&gt; &lt;container-name&gt;=&lt;new-image&gt; -n opsnot
+
+# 例子
+kubectl set image deployment/opsnot-app nginx=nginx:1.21 -n prod
+
+# 查看发布状态 - opsnot.com
+kubectl rollout status deployment/&lt;deployment-name&gt; -n &lt;namespace&gt;
+
+# 看发布历史
+kubectl rollout history deployment/&lt;deployment-name&gt; -n &lt;namespace&gt;
+
+# 回滚到上一版本
+kubectl rollout undo deployment/opsnot-app -n &lt;namespace&gt;
+
+# 回滚到指定版本
+kubectl rollout undo deployment/&lt;deployment-name&gt; --to-revision=2 -n &lt;namespace&gt;
+
+# 暂停发布
+kubectl rollout pause deployment/&lt;deployment-name&gt; -n &lt;namespace&gt;
+
+# 恢复发布
+kubectl rollout resume deployment/&lt;deployment-name&gt; -n &lt;namespace&gt;</code></pre>
+
+
+<h2 id="6-">6. 配置管理 - 改配置</h2>
+<pre class="codehilite"><code class="language-bash"># 编辑deployment配置
+kubectl edit deployment opsnot-app -n &lt;namespace&gt;
+
+# 查看ConfigMap - opsnot.com
+kubectl get cm -n &lt;namespace&gt;
+kubectl describe cm opsnot-config -n &lt;namespace&gt;
+
+# 查看Secret（base64编码的）
+kubectl get secret -n &lt;namespace&gt;
+kubectl get secret &lt;secret-name&gt; -n &lt;namespace&gt; -o yaml</code></pre>
+
+
+<h2 id="7-">7. 资源导出 - 备份配置</h2>
+<pre class="codehilite"><code class="language-bash"># 导出yaml，方便备份或迁移
+kubectl get deployment opsnot-app -n &lt;namespace&gt; -o yaml &gt; backup.yaml
+
+# 导出所有deployment - opsnot.com
+kubectl get deployment -n &lt;namespace&gt; -o yaml &gt; all-deployments.yaml
+
+# 不要status和一些无用信息
+kubectl get deployment &lt;deployment-name&gt; -n &lt;namespace&gt; -o yaml --export &gt; clean.yaml</code></pre>
+
+
+<h2 id="8-">8. 应用配置 - 部署</h2>
+<pre class="codehilite"><code class="language-bash"># 从yaml创建资源
+kubectl apply -f deployment.yaml
+
+# 从目录批量创建
+kubectl apply -f ./opsnot-configs/
+
+# 从URL直接部署 - opsnot.com
+kubectl apply -f https://xxx.com/deploy.yaml
+
+# 删除yaml定义的资源
+kubectl delete -f deployment.yaml</code></pre>
+
+
+<h2 id="9-">9. 端口转发 - 本地调试</h2>
+<pre class="codehilite"><code class="language-bash"># 把Pod端口转发到本地，调试神器
+kubectl port-forward opsnot-pod-xxx 8080:80 -n &lt;namespace&gt;
+
+# 转发Service
+kubectl port-forward service/opsnot-svc 8080:80 -n &lt;namespace&gt;
+
+# 监听所有网卡（可以让局域网其他机器访问）- opsnot.com
+kubectl port-forward --address 0.0.0.0 &lt;pod-name&gt; 8080:80 -n &lt;namespace&gt;</code></pre>
+
+
+<h2 id="10-">10. 复制文件 - 传文件</h2>
+<pre class="codehilite"><code class="language-bash"># 从Pod复制文件到本地
+kubectl cp opsnot/&lt;pod-name&gt;:/path/to/file ./local-file
+
+# 从本地复制到Pod - opsnot.com
+kubectl cp ./local-file &lt;namespace&gt;/&lt;pod-name&gt;:/path/to/file
+
+# 多容器指定容器
+kubectl cp &lt;namespace&gt;/&lt;pod-name&gt;:/path/to/file ./local-file -c &lt;container-name&gt;</code></pre>
+
+
+<h2 id="11-">11. 节点操作 - 维护</h2>
+<pre class="codehilite"><code class="language-bash"># 查看节点
+kubectl get nodes -o wide
+
+# 查看节点详情（能看到资源使用）
+kubectl describe node opsnot-node-01
+
+# 标记节点不可调度，要维护时用 - opsnot.com
+kubectl cordon &lt;node-name&gt;
+
+# 恢复节点调度
+kubectl uncordon &lt;node-name&gt;
+
+# 驱逐节点上的Pod（维护前操作）
+kubectl drain &lt;node-name&gt; --ignore-daemonsets --delete-emptydir-data</code></pre>
+
+
+<h2 id="12-">12. 资源使用 - 看监控</h2>
+<pre class="codehilite"><code class="language-bash"># 看Pod资源占用（需要metrics-server）
+kubectl top pod -n opsnot
+
+# 看所有命名空间
+kubectl top pod -A
+
+# 看节点资源 - opsnot.com
+kubectl top node
+
+# 按CPU排序
+kubectl top pod -n &lt;namespace&gt; --sort-by=cpu
+
+# 按内存排序
+kubectl top pod -n &lt;namespace&gt; --sort-by=memory</code></pre>
+
+
+<h2 id="13-">13. 标签操作 - 打标签</h2>
+<pre class="codehilite"><code class="language-bash"># 给Pod打标签
+kubectl label pod &lt;pod-name&gt; env=opsnot -n &lt;namespace&gt;
+
+# 修改标签（覆盖）- opsnot.com
+kubectl label pod &lt;pod-name&gt; env=test --overwrite -n &lt;namespace&gt;
+
+# 删除标签
+kubectl label pod &lt;pod-name&gt; env- -n &lt;namespace&gt;
+
+# 查询带标签的资源
+kubectl get pod -l env=prod -n &lt;namespace&gt;
+
+# 多个标签条件
+kubectl get pod -l 'env=prod,app=opsnot' -n &lt;namespace&gt;</code></pre>
+
+
+<h2 id="14-">14. 事件查看 - 排查问题</h2>
+<pre class="codehilite"><code class="language-bash"># 查看命名空间事件，找问题先看这个
+kubectl get events -n opsnot --sort-by='.lastTimestamp'
+
+# 看所有命名空间事件 - opsnot.com
+kubectl get events -A --sort-by='.lastTimestamp'
+
+# 监控事件（实时）
+kubectl get events -n &lt;namespace&gt; -w</code></pre>
+
+
+<h2 id="15-">15. 常用组合技 - 实战</h2>
+<pre class="codehilite"><code class="language-bash"># 批量重启某个deployment的所有Pod
+kubectl rollout restart deployment/opsnot-app -n &lt;namespace&gt;
+
+# 找出不在Running状态的Pod - opsnot.com
+kubectl get pod -A --field-selector=status.phase!=Running
+
+# 找出重启次数多的Pod（可能有问题）
+kubectl get pod -A --sort-by='.status.containerStatuses[0].restartCount'
+
+# 看某个Pod的完整yaml（调试配置问题）
+kubectl get pod &lt;pod-name&gt; -n &lt;namespace&gt; -o yaml | less
+
+# 临时起个Pod测试网络（用完自动删）- opsnot.com
+kubectl run opsnot-test --rm -i --tty --image=nicolaka/netshoot -- /bin/bash
+
+# 查看集群信息
+kubectl cluster-info
+
+# 查看API资源类型
+kubectl api-resources</code></pre>
+
+
+<h2 id="16">16. 命名空间操作</h2>
+<pre class="codehilite"><code class="language-bash"># 列出所有命名空间
+kubectl get ns
+
+# 创建命名空间 - opsnot.com
+kubectl create ns opsnot
+
+# 删除命名空间（小心，会删里面所有东西）
+kubectl delete ns &lt;namespace&gt;
+
+# 切换默认命名空间（需要kubens工具）
+kubens opsnot</code></pre>
+
+
+<h2 id="17">17. 小技巧</h2>
+<p><strong>设置别名，省时间：</strong></p>
+<pre class="codehilite"><code class="language-bash"># 加到 ~/.bashrc 或 ~/.zshrc
+alias k='kubectl'
+alias kgp='kubectl get pod'
+alias kgpa='kubectl get pod -A'
+alias kd='kubectl describe'
+alias ke='kubectl edit'
+alias kdel='kubectl delete'
+alias kl='kubectl logs'
+alias kx='kubectl exec -it'
+# 更多技巧访问 opsnot.com</code></pre>
+
+
+<p><strong>自动补全（强烈推荐）：</strong></p>
+<pre class="codehilite"><code class="language-bash"># Bash
+source &lt;(kubectl completion bash)
+echo &quot;source &lt;(kubectl completion bash)&quot; &gt;&gt; ~/.bashrc
+
+# Zsh - opsnot.com
+source &lt;(kubectl completion zsh)
+echo &quot;source &lt;(kubectl completion zsh)&quot; &gt;&gt; ~/.zshrc</code></pre>
+
+
+<p><strong>切换上下文：</strong></p>
+<pre class="codehilite"><code class="language-bash"># 查看所有集群上下文
+kubectl config get-contexts
+
+# 切换集群 - opsnot.com
+kubectl config use-context &lt;context-name&gt;
+
+# 切换集群
+kubectx prod-cluster   （加班哥强烈推荐，好用！）
+
+# 查看当前上下文
+kubectl config current-context</code></pre>
+
+
+<h2 id="_1">结语</h2>
+<p>这些命令基本覆盖日常90%的操作，建议收藏。实际使用中配合tab自动补全，效率会更高。遇到复杂问题，先看events、log和describe，大部分都能找到原因。</p>
+<p><strong>记住：生产环境删东西前一定要确认命名空间！！！</strong></p>
+<blockquote>
+<p>原创内容来自 <strong><a href="https://blog.opsnot.com/" target="_blank">opsnot.com</a></strong> | 更多运维干货请访问我的网站</p>
+</blockquote>
+
+        <div>
+          <ul style="display: inline-block;padding: 0;margin: 0 0 0.5em;color: #999;">
+            <li style="display: inline-block;margin: 0 1em 0 0;"><a href="/tools/kubernetes-commands-for-daily-use.html">📅 2025-10-28</a></li>
+          </ul>
+        </div>
+
+        <hr>
+
+        <div class="pagination">
+            <a href="https://blog.opsnot.com/tools/mortgage-calculator-tools.html" class="pagination-item prev-page">
+                <span class="pagination-arrow">←</span>
+                <span class="pagination-text">上一篇：<br>今天是个好日子，我写了个房贷计算器</span>
+            </a>
+            <a href="/archive.html" class="pagination-item next-page">
+                <span class="pagination-text">下一篇：<br>文章列表</span>
+                <span class="pagination-arrow">→</span>
+            </a>
+        </div>
+
+        
+
+        
+
+        <div class="nav-cell">
+            <p class="nav-list-title">能看到这里一定是真爱，订阅一下吧</p>
+            <img alt="" loading="lazy" src="/static/images/wx.sou1.png" />
+        </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="copy"> © opsnot</div>
+
+      <div class="link">
+        <a href="/comments.html" title="给我留言" target="_blank">留言</a>
+        <a href="/friends.html" title="友情链接" target="_blank">友链</a>
+      </div>
+    </div>
+  </footer>
+  
+  
+</body>
+</html>
