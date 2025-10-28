@@ -1,5 +1,12 @@
 [
   {
+    "url": "https://blog.opsnot.com/tools/kubernetes-commands-for-daily-use.html",
+    "title": "K8s高频命令实操手册，值得收藏！",
+    "content": "这篇干货分享汇集了多年K8s实战中高频使用的命令，涵盖Pod管理、容器调试、资源扩缩容等，帮助你提升操作效率，快速解决问题。",
+    "keywords": "kubectl命令, Kubernetes实战, K8s命令汇总, Pod管理, 容器调试, 资源扩缩容, 滚动更新, 配置管理, 端口转发, 节点操作, 资源监控, 事件查看, 标签操作, 文件复制, 命名空间操作",
+    "date": "2025-10-28"
+  },
+  {
     "url": "https://blog.opsnot.com/tools/mortgage-calculator-tools.html",
     "title": "今天是个好日子，我写了个房贷计算器",
     "content": "这篇文章介绍了作者开发的房贷计算器工具，支持纯商贷、公积金、组合贷三种模式，设计简洁易用，旨在为用户提供清爽的房贷计算体验。",
