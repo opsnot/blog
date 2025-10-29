@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="applicable-device" content="pc,mobile">
+  <meta name="keywords" content="Docker命令, Docker操作, Docker镜像, Docker容器, Docker数据卷, Docker网络, Docker日志, Docker资源管理, Docker Compose, Docker排错" />
+  <meta name="description" content="天天被问Docker命令怎么用？本文整理了日常95%的Docker操作命令，涵盖镜像、容器、日志、数据卷、网络等，都是干货，直接甩链接解决问题！" />
+  <link rel="alternate" type="application/rss+xml" title="运维不加班" href="https://blog.opsnot.com/feed.xml" />
+  <link rel="stylesheet" href="https://blog.opsnot.com/static/posts/css/ops-coffee.min.css" type="text/css" />
+
+  <!-- Begin SEO tag -->
+  <title>Docker高频命令实操手册，值得收藏！</title>
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:site_name" content="运维不加班" />
+  <meta property="og:url" content="https://blog.opsnot.comtech/docker-commands-cheat-sheet.html" />
+  <meta property="og:title" content="Docker高频命令实操手册，值得收藏！" />
+  <meta property="og:description" content="天天被问Docker命令怎么用？本文整理了日常95%的Docker操作命令，涵盖镜像、容器、日志、数据卷、网络等，都是干货，直接甩链接解决问题！" />
+  <link rel="canonical" href="https://blog.opsnot.comtech/docker-commands-cheat-sheet.html" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Docker高频命令实操手册，值得收藏！",
+    "description": "天天被问Docker命令怎么用？本文整理了日常95%的Docker操作命令，涵盖镜像、容器、日志、数据卷、网络等，都是干货，直接甩链接解决问题！",
+    "url": "https://blog.opsnot.comtech/docker-commands-cheat-sheet.html",
+    "author": {
+      "@type": "Person",
+      "name": "运维不加班"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "运维不加班",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://blog.opsnot.com/favicon.ico"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://blog.opsnot.comtech/docker-commands-cheat-sheet.html"
+    }
+  }
+  </script>
+  <!-- End SEO tag -->
+</head>
+
+<body>
+  <div class="header">
+    <div class="menu-button">&#9776; 
+        <span class="menu-title">运维不加班</span>
+    </div> 
+
+    <div class="container">
+      <nav class="header-site">
+        <ul>
+          <li><a href="/">首页</a></li>
+            <li><a href="/tag/index.html" target="_self">标签</a></li>
+            <li><a href="/archive.html" target="_self">归档</a></li>
+          <li class="search"><a href="/search.html" target="_self" aria-label="搜索">🔍</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <header>
+    <div class="container">
+      <a href="/">
+        <div class="name">运维不加班</div>
+        <div class="slogan">唯有热爱，方能成就非凡，若无痴迷，岂能窥得天机</div>
+      </a>
+    </div>
+  </header>
+
+  <div id="content-wrap">
+    <div class="container">
+        <h1 id="art-title">Docker高频命令实操手册，值得收藏！</h1>
+
+        <p>天天被问Docker命令怎么用？索性整理一份，涵盖日常95%的docker操作，都是干货，以后直接甩链接得了！</p>
+<h2 id="1">1. 镜像相关</h2>
+<h3 id="11">1.1 拉镜像</h3>
+<pre class="codehilite"><code class="language-bash"># 拉取nginx最新版
+docker pull nginx
+
+# 拉指定版本（opsnot推荐）
+docker pull nginx:1.24-alpine</code></pre>
+
+
+<h3 id="12">1.2 查看本地镜像</h3>
+<pre class="codehilite"><code class="language-bash">docker images
+
+# 只看镜像ID，方便批量操作
+docker images -q</code></pre>
+
+
+<h3 id="13">1.3 删镜像</h3>
+<pre class="codehilite"><code class="language-bash"># 删单个
+docker rmi nginx:latest
+
+# 批量删没用的镜像（慎用！）
+docker rmi $(docker images -q)
+
+# opsnot.com提示：删之前先确认下
+docker images | grep none</code></pre>
+
+
+<h3 id="14">1.4 构建镜像</h3>
+<pre class="codehilite"><code class="language-bash"># 基础构建
+docker build -t myapp:v1 .
+
+# 指定Dockerfile路径
+docker build -f /path/to/Dockerfile -t myapp:v1 .
+
+# 不用缓存重新构建
+docker build --no-cache -t myapp:v1 .</code></pre>
+
+
+<h2 id="2">2. 容器操作</h2>
+<h3 id="21">2.1 启动容器</h3>
+<pre class="codehilite"><code class="language-bash"># 最简单的启动
+docker run nginx
+
+# 后台运行 + 端口映射（常用）
+docker run -d -p 8080:80 --name my-nginx nginx
+
+# 挂载数据卷 + 环境变量
+docker run -d \
+  -p 3306:3306 \
+  -v /data/mysql:/var/lib/mysql \
+  -e MYSQL_ROOT_PASSWORD=opsnot123 \
+  --name mysql8 \
+  mysql:8.0
+
+# 限制资源使用
+docker run -d \
+  --memory=&quot;512m&quot; \
+  --cpus=&quot;0.5&quot; \
+  -p 8080:80 \
+  nginx</code></pre>
+
+
+<h3 id="22">2.2 查看容器</h3>
+<pre class="codehilite"><code class="language-bash"># 看运行中的
+docker ps
+
+# 看所有容器（包括停止的）
+docker ps -a
+
+# 只看容器ID
+docker ps -q
+
+# 看最近创建的5个
+docker ps -n 5</code></pre>
+
+
+<h3 id="23">2.3 停止/启动/重启</h3>
+<pre class="codehilite"><code class="language-bash"># 优雅停止（给10秒处理时间）
+docker stop my-nginx
+
+# 强制停止
+docker kill my-nginx
+
+# 启动已停止的容器
+docker start my-nginx
+
+# 重启
+docker restart my-nginx</code></pre>
+
+
+<h3 id="24">2.4 删容器</h3>
+<pre class="codehilite"><code class="language-bash"># 删单个（必须先停止）
+docker rm my-nginx
+
+# 强制删除运行中的
+docker rm -f my-nginx
+
+# 批量删所有停止的容器
+docker rm $(docker ps -aq -f status=exited)
+
+# opsnot经验：删之前看清楚
+docker ps -a | grep Exited</code></pre>
+
+
+<h3 id="25">2.5 进容器调试</h3>
+<pre class="codehilite"><code class="language-bash"># 进容器bash（最常用）
+docker exec -it my-nginx bash
+
+# 有些镜像没bash，用sh
+docker exec -it my-nginx sh
+
+# 执行单条命令不进容器
+docker exec my-nginx ls /etc/nginx
+
+# 以root身份进入
+docker exec -u root -it my-nginx bash</code></pre>
+
+
+<h2 id="3">3. 日志相关</h2>
+<pre class="codehilite"><code class="language-bash"># 查看日志
+docker logs my-nginx
+
+# 实时查看（跟tail -f一样）
+docker logs -f my-nginx
+
+# 只看最后100行
+docker logs --tail 100 my-nginx
+
+# 带时间戳
+docker logs -t my-nginx
+
+# opsnot.com常用组合
+docker logs -f --tail 200 my-nginx</code></pre>
+
+
+<h2 id="4">4. 数据卷操作</h2>
+<h3 id="41">4.1 创建和查看</h3>
+<pre class="codehilite"><code class="language-bash"># 创建数据卷
+docker volume create my-data
+
+# 查看所有卷
+docker volume ls
+
+# 查看卷详情
+docker volume inspect my-data</code></pre>
+
+
+<h3 id="42">4.2 删除数据卷</h3>
+<pre class="codehilite"><code class="language-bash"># 删除卷
+docker volume rm my-data
+
+# 删除所有未使用的卷（小心！）
+docker volume prune</code></pre>
+
+
+<h2 id="5">5. 网络相关</h2>
+<h3 id="51">5.1 查看网络</h3>
+<pre class="codehilite"><code class="language-bash"># 查看网络
+docker network ls
+
+# 查看网络详情
+docker network inspect my-network</code></pre>
+
+
+<h3 id="52">5.2 管理网络</h3>
+<pre class="codehilite"><code class="language-bash"># 创建自定义网络
+docker network create my-network
+
+# 容器连接到网络
+docker network connect my-network my-nginx
+
+# 断开网络
+docker network disconnect my-network my-nginx</code></pre>
+
+
+<h2 id="6">6. 清理命令</h2>
+<h3 id="61">6.1 分类清理</h3>
+<pre class="codehilite"><code class="language-bash"># 删除所有停止的容器
+docker container prune
+
+# 删除所有未使用的镜像
+docker image prune
+
+# 删除所有未使用的卷
+docker volume prune
+
+# 删除所有未使用的网络
+docker network prune</code></pre>
+
+
+<h3 id="62">6.2 一键清理</h3>
+<pre class="codehilite"><code class="language-bash"># 一键清理所有（慎用！）
+docker system prune -a
+
+# opsnot推荐：看看能释放多少空间
+docker system df</code></pre>
+
+
+<h2 id="7">7. 容器资源查看</h2>
+<h3 id="71">7.1 实时监控</h3>
+<pre class="codehilite"><code class="language-bash"># 实时查看容器资源使用
+docker stats
+
+# 只看指定容器
+docker stats my-nginx</code></pre>
+
+
+<h3 id="72">7.2 详细信息</h3>
+<pre class="codehilite"><code class="language-bash"># 查看容器详细信息
+docker inspect my-nginx
+
+# 查看容器内进程
+docker top my-nginx</code></pre>
+
+
+<h2 id="8">8. 导入导出</h2>
+<h3 id="81">8.1 镜像导入导出</h3>
+<pre class="codehilite"><code class="language-bash"># 导出镜像
+docker save -o nginx.tar nginx:latest
+
+# 导入镜像
+docker load -i nginx.tar</code></pre>
+
+
+<h3 id="82">8.2 容器导入导出</h3>
+<pre class="codehilite"><code class="language-bash"># 导出容器（含修改）
+docker export my-nginx &gt; nginx-container.tar
+
+# 导入容器为镜像
+docker import nginx-container.tar my-nginx:v1</code></pre>
+
+
+<h2 id="9-docker-compose">9. Docker Compose常用</h2>
+<h3 id="91">9.1 基础操作</h3>
+<pre class="codehilite"><code class="language-bash"># 启动服务（后台）
+docker-compose up -d
+
+# 停止服务
+docker-compose down
+
+# 查看服务状态
+docker-compose ps</code></pre>
+
+
+<h3 id="92">9.2 日志和重启</h3>
+<pre class="codehilite"><code class="language-bash"># 查看服务日志
+docker-compose logs -f
+
+# 重启服务
+docker-compose restart
+
+# 只重启某个服务
+docker-compose restart nginx
+
+# 构建并启动
+docker-compose up -d --build</code></pre>
+
+
+<h2 id="10">10. 实用技巧</h2>
+<h3 id="101">10.1 快速清理脚本</h3>
+<pre class="codehilite"><code class="language-bash">#!/bin/bash
+# opsnot清理脚本
+echo &quot;停止所有容器...&quot;
+docker stop $(docker ps -q)
+
+echo &quot;删除所有容器...&quot;
+docker rm $(docker ps -aq)
+
+echo &quot;清理未使用的镜像...&quot;
+docker image prune -a -f
+
+echo &quot;清理完成！&quot;
+docker system df</code></pre>
+
+
+<h3 id="102-ip">10.2 查看容器IP</h3>
+<pre class="codehilite"><code class="language-bash">docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' my-nginx</code></pre>
+
+
+<h3 id="103">10.3 复制文件</h3>
+<pre class="codehilite"><code class="language-bash"># 从容器复制到宿主机
+docker cp my-nginx:/etc/nginx/nginx.conf ./nginx.conf
+
+# 从宿主机复制到容器
+docker cp ./nginx.conf my-nginx:/etc/nginx/nginx.conf</code></pre>
+
+
+<h3 id="104">10.4 限制日志大小</h3>
+<pre class="codehilite"><code class="language-bash"># 启动时设置
+docker run -d \
+  --log-opt max-size=10m \
+  --log-opt max-file=3 \
+  nginx</code></pre>
+
+
+<h2 id="11_1">11. 排错命令</h2>
+<h3 id="111">11.1 日志排查</h3>
+<pre class="codehilite"><code class="language-bash"># 查看容器启动失败原因
+docker logs container_name
+
+# 查看容器退出状态码
+docker ps -a | grep container_name</code></pre>
+
+
+<h3 id="112">11.2 网络和端口</h3>
+<pre class="codehilite"><code class="language-bash"># 查看容器占用的端口
+docker port container_name
+
+# 进入容器排查（容器运行中）
+docker exec -it container_name bash</code></pre>
+
+
+<h3 id="113">11.3 系统信息</h3>
+<pre class="codehilite"><code class="language-bash"># 查看Docker版本信息
+docker version
+
+# 查看Docker系统信息
+docker info</code></pre>
+
+
+<p>基本上常用的就这些，遇到问题先google，别动不动就删容器重来。记住：<strong>先查日志，再看配置，最后才重启。</strong></p>
+<p>有问题留言，我看到会回。</p>
+<blockquote>
+<p>本文由 opsnot.com 整理，转载请注明出处</p>
+</blockquote>
+
+        <div>
+          <ul style="display: inline-block;padding: 0;margin: 0 0 0.5em;color: #999;">
+            <li style="display: inline-block;margin: 0 1em 0 0;"><a href="/tech/docker-commands-cheat-sheet.html">📅 2025-10-29</a></li>
+          </ul>
+        </div>
+
+        <hr>
+
+        <div class="pagination">
+            <a href="/archive.html" class="pagination-item prev-page">
+                <span class="pagination-arrow">←</span>
+                <span class="pagination-text">上一篇：<br>文章列表</span>
+            </a>
+            <a href="/archive.html" class="pagination-item next-page">
+                <span class="pagination-text">下一篇：<br>文章列表</span>
+                <span class="pagination-arrow">→</span>
+            </a>
+        </div>
+
+        
+
+        
+
+        <div class="nav-cell">
+            <p class="nav-list-title">能看到这里一定是真爱，订阅一下吧</p>
+            <img alt="" loading="lazy" src="/static/images/wx.sou1.png" />
+        </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="copy"> © opsnot</div>
+
+      <div class="link">
+        <a href="/comments.html" title="给我留言" target="_blank">留言</a>
+        <a href="/friends.html" title="友情链接" target="_blank">友链</a>
+      </div>
+    </div>
+  </footer>
+  
+  
+</body>
+</html>
