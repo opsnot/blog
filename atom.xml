@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
   <id>https://blog.opsnot.com</id>
   <title>运维不加班</title>
-  <updated>2025-10-28T22:29:07.688282+08:00</updated>
+  <updated>2025-10-29T15:47:57.085893+08:00</updated>
   <author>
     <name>运维不加班</name>
   </author>
@@ -10,6 +10,14 @@
   <link href="https://blog.opsnot.com/atom.xml" rel="self"/>
   <generator>Custom CMS v1.0</generator>
   <subtitle>运维不加班 的个人博客，欢迎订阅。</subtitle>
+  <entry>
+    <id>https://blog.opsnot.com/tech/docker-commands-cheat-sheet.html</id>
+    <title>Docker高频命令实操手册，值得收藏！</title>
+    <updated>2025-10-29T15:47:57.085893+08:00</updated>
+    <link href="https://blog.opsnot.com/tech/docker-commands-cheat-sheet.html"/>
+    <summary>天天被问Docker命令怎么用？本文整理了日常95%的Docker操作命令，涵盖镜像、容器、日志、数据卷、网络等，都是干货，直接甩链接解决问题！</summary>
+    <published>2025-10-29T15:47:57.068663+08:00</published>
+  </entry>
   <entry>
     <id>https://blog.opsnot.com/tools/kubernetes-commands-for-daily-use.html</id>
     <title>K8s高频命令实操手册，值得收藏！</title>
