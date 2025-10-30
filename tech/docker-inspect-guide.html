@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="applicable-device" content="pc,mobile">
+  <meta name="keywords" content="docker inspect, 容器排查, Docker问题排查, Docker容器配置, Docker日志, Docker网络配置, Docker资源限制, Docker重启策略, Docker数据卷, Docker环境变量, Docker健康检查" />
+  <meta name="description" content="深入了解如何使用 docker inspect 命令排查 Docker 容器问题，包括网络配置、资源限制、日志路径等，掌握容器信息的全面查看方法。" />
+  <link rel="alternate" type="application/rss+xml" title="运维不加班" href="https://blog.opsnot.com/feed.xml" />
+  <link rel="stylesheet" href="https://blog.opsnot.com/static/posts/css/ops-coffee.min.css" type="text/css" />
+
+  <!-- Begin SEO tag -->
+  <title>Docker Inspect，值得族谱单开一页的命令</title>
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:site_name" content="运维不加班" />
+  <meta property="og:url" content="https://blog.opsnot.comtech/docker-inspect-guide.html" />
+  <meta property="og:title" content="Docker Inspect，值得族谱单开一页的命令" />
+  <meta property="og:description" content="深入了解如何使用 docker inspect 命令排查 Docker 容器问题，包括网络配置、资源限制、日志路径等，掌握容器信息的全面查看方法。" />
+  <link rel="canonical" href="https://blog.opsnot.comtech/docker-inspect-guide.html" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Docker Inspect，值得族谱单开一页的命令",
+    "description": "深入了解如何使用 docker inspect 命令排查 Docker 容器问题，包括网络配置、资源限制、日志路径等，掌握容器信息的全面查看方法。",
+    "url": "https://blog.opsnot.comtech/docker-inspect-guide.html",
+    "author": {
+      "@type": "Person",
+      "name": "运维不加班"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "运维不加班",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://blog.opsnot.com/favicon.ico"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://blog.opsnot.comtech/docker-inspect-guide.html"
+    }
+  }
+  </script>
+  <!-- End SEO tag -->
+</head>
+
+<body>
+  <div class="header">
+    <div class="menu-button">&#9776; 
+        <span class="menu-title">运维不加班</span>
+    </div> 
+
+    <div class="container">
+      <nav class="header-site">
+        <ul>
+          <li><a href="/">首页</a></li>
+            <li><a href="/tag/index.html" target="_self">标签</a></li>
+            <li><a href="/archive.html" target="_self">归档</a></li>
+          <li class="search"><a href="/search.html" target="_self" aria-label="搜索">🔍</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <header>
+    <div class="container">
+      <a href="/">
+        <div class="name">运维不加班</div>
+        <div class="slogan">唯有热爱，方能成就非凡，若无痴迷，岂能窥得天机</div>
+      </a>
+    </div>
+  </header>
+
+  <div id="content-wrap">
+    <div class="container">
+        <h1 id="art-title">Docker Inspect，值得族谱单开一页的命令</h1>
+
+        <p>只会 <code>docker ps</code>、<code>docker logs</code>？遇到复杂问题基本就懵了。<br>
+其实 <code>docker inspect</code> 才是排查问题的大杀器，容器的所有信息都在里面。</p>
+<h2 id="1">1. 基础用法</h2>
+<h3 id="11">1.1 查看容器完整信息</h3>
+<pre class="codehilite"><code class="language-bash"># 查看容器所有信息（opsnot常用）
+docker inspect my-nginx
+
+# 输出是JSON格式，信息巨多（加班哥提醒！）
+docker inspect my-nginx | less</code></pre>
+
+
+<h3 id="12">1.2 查看镜像信息</h3>
+<pre class="codehilite"><code class="language-bash"># 查看镜像详情
+docker inspect nginx:latest
+
+# 查看镜像分层
+docker inspect nginx:latest | grep Layers -A 20</code></pre>
+
+
+<h2 id="2">2. 精准提取信息</h2>
+<h3 id="21-ip">2.1 获取容器IP</h3>
+<pre class="codehilite"><code class="language-bash"># 方法1：直接获取IP（opsnot.com推荐）
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' my-nginx
+
+# 方法2：获取指定网络的IP（加班哥常用）
+docker inspect -f '{{.NetworkSettings.Networks.bridge.IPAddress}}' my-nginx
+
+# 方法3：用jq处理（需要安装jq）
+docker inspect my-nginx | jq -r '.[0].NetworkSettings.IPAddress'</code></pre>
+
+
+<h3 id="22">2.2 查看端口映射</h3>
+<pre class="codehilite"><code class="language-bash"># 查看所有端口映射
+docker inspect -f '{{.NetworkSettings.Ports}}' my-nginx
+
+# 更清晰的格式
+docker inspect my-nginx | grep -A 10 '&quot;Ports&quot;'
+
+# 或者用这个更简单
+docker port my-nginx</code></pre>
+
+
+<h3 id="23">2.3 查看挂载的数据卷</h3>
+<pre class="codehilite"><code class="language-bash"># 查看所有挂载点
+docker inspect -f '{{.Mounts}}' my-nginx
+
+# 更友好的查看方式（加班哥推荐）
+docker inspect my-nginx | jq '.[0].Mounts'
+
+# 只看数据卷路径（opsnot.com常用）
+docker inspect -f '{{range .Mounts}}{{.Source}} -&gt; {{.Destination}}{{&quot;\n&quot;}}{{end}}' my-nginx</code></pre>
+
+
+<h3 id="24">2.4 查看环境变量</h3>
+<pre class="codehilite"><code class="language-bash"># 查看所有环境变量
+docker inspect -f '{{.Config.Env}}' my-nginx
+
+# 用jq格式化
+docker inspect my-nginx | jq '.[0].Config.Env'
+
+# 查看是否包含特定环境变量
+docker inspect my-nginx | grep MYSQL_ROOT_PASSWORD</code></pre>
+
+
+<h3 id="25">2.5 查看容器状态</h3>
+<pre class="codehilite"><code class="language-bash"># 查看运行状态
+docker inspect -f '{{.State.Status}}' my-nginx
+
+# 查看容器启动时间
+docker inspect -f '{{.State.StartedAt}}' my-nginx
+
+# 查看容器退出代码（排查容器挂掉的原因）
+docker inspect -f '{{.State.ExitCode}}' my-nginx
+
+# 查看容器是否在重启
+docker inspect -f '{{.State.Restarting}}' my-nginx</code></pre>
+
+
+<h2 id="3">3. 网络相关</h2>
+<h3 id="31">3.1 查看网络配置</h3>
+<pre class="codehilite"><code class="language-bash"># 查看容器所在网络
+docker inspect -f '{{.NetworkSettings.Networks}}' my-nginx
+
+# 查看网关
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.Gateway}}{{end}}' my-nginx
+
+# 查看MAC地址
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.MacAddress}}{{end}}' my-nginx</code></pre>
+
+
+<h3 id="32-dns">3.2 查看DNS配置</h3>
+<pre class="codehilite"><code class="language-bash"># 查看DNS服务器
+docker inspect -f '{{.HostConfig.Dns}}' opsnot-nginx
+
+# 查看/etc/hosts配置
+docker inspect -f '{{.HostConfig.ExtraHosts}}' opsnot-nginx</code></pre>
+
+
+<h2 id="4">4. 资源限制</h2>
+<h3 id="41">4.1 查看内存限制</h3>
+<pre class="codehilite"><code class="language-bash"># 查看内存限制（返回字节数）
+docker inspect -f '{{.HostConfig.Memory}}' opsnot-nginx
+
+# 转换成可读格式（需要计算）
+docker inspect opsnot-nginx | jq '.[0].HostConfig.Memory / 1024 / 1024'
+
+# 查看内存预留
+docker inspect -f '{{.HostConfig.MemoryReservation}}' opsnot-nginx</code></pre>
+
+
+<h3 id="42-cpu">4.2 查看CPU限制</h3>
+<pre class="codehilite"><code class="language-bash"># 查看CPU配额
+docker inspect -f '{{.HostConfig.CpuQuota}}' my-nginx
+
+# 查看CPU权重
+docker inspect -f '{{.HostConfig.CpuShares}}' my-nginx
+
+# 查看CPU核心数限制
+docker inspect -f '{{.HostConfig.NanoCpus}}' my-nginx</code></pre>
+
+
+<h2 id="5">5. 日志相关</h2>
+<h3 id="51">5.1 查看日志配置</h3>
+<pre class="codehilite"><code class="language-bash"># 查看日志驱动
+docker inspect -f '{{.HostConfig.LogConfig.Type}}' my-nginx
+
+# 查看日志选项（大小限制等）
+docker inspect -f '{{.HostConfig.LogConfig.Config}}' my-nginx
+
+# 查看日志路径
+docker inspect -f '{{.LogPath}}' my-nginx</code></pre>
+
+
+<h2 id="6">6. 重启策略</h2>
+<pre class="codehilite"><code class="language-bash"># 查看重启策略
+docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' my-nginx
+
+# 查看重启次数
+docker inspect -f '{{.RestartCount}}' my-nginx
+
+# 查看最大重启次数
+docker inspect -f '{{.HostConfig.RestartPolicy.MaximumRetryCount}}' my-nginx</code></pre>
+
+
+<h2 id="7">7. 镜像层信息</h2>
+<pre class="codehilite"><code class="language-bash"># 查看镜像ID
+docker inspect -f '{{.Image}}' my-nginx
+
+# 查看镜像的所有层
+docker inspect nginx:latest | jq '.[0].RootFS.Layers'
+
+# 查看镜像构建参数
+docker inspect nginx:latest | jq '.[0].Config.Cmd'</code></pre>
+
+
+<h2 id="8">8. 实战技巧</h2>
+<h3 id="81">8.1 批量查询容器信息</h3>
+<pre class="codehilite"><code class="language-bash"># 查询所有容器的IP（opsnot常用）
+docker ps -q | xargs -I {} docker inspect -f '{{.Name}} {{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' {}
+
+# 查询所有容器的状态
+docker ps -aq | xargs docker inspect -f '{{.Name}} {{.State.Status}}'
+
+# opsnot脚本：导出所有容器配置
+for container in $(docker ps -q); do
+    echo &quot;=== $(docker inspect -f '{{.Name}}' $container) ===&quot;
+    docker inspect $container &gt; ${container}_config.json
+done</code></pre>
+
+
+<h3 id="82">8.2 对比两个容器配置差异</h3>
+<pre class="codehilite"><code class="language-bash"># 导出两个容器配置之后 diff
+docker inspect ops-not-container1 &gt; c1.json
+docker inspect ops-not-container2 &gt; c2.json
+diff c1.json c2.json
+
+# 或者可以用jq对比特定字段（opsnot提示：需要安装jq）
+diff &lt;(docker inspect ops-not-container1 | jq '.[0].Config') \
+     &lt;(docker inspect ops-not-container2 | jq '.[0].Config')</code></pre>
+
+
+<h3 id="83">8.3 检查容器健康状态</h3>
+<pre class="codehilite"><code class="language-bash"># 查看健康检查配置
+docker inspect -f '{{.Config.Healthcheck}}' opsnot-kafka
+
+# 查看健康检查结果
+docker inspect -f '{{.State.Health.Status}}' opsnot-kafka
+
+# 查看最近的健康检查日志(opsnot常用)
+docker inspect opsnot-kafka | jq '.[0].State.Health.Log[-1]'</code></pre>
+
+
+<h3 id="84">8.4 查看容器创建命令（反推）</h3>
+<pre class="codehilite"><code class="language-bash"># 虽然无法完全还原，但能看到大部分配置
+docker inspect opsnot-tomcat | jq '.[0].Config, .[0].HostConfig'
+
+# opsnot.com提示：可以用runlike工具还原
+# pip install runlike
+# runlike opsnot-tomcat</code></pre>
+
+
+<h3 id="85">8.5 监控脚本示例</h3>
+<pre class="codehilite"><code class="language-bash">#!/bin/bash
+# opsnot.com容器监控脚本
+
+for container in $(docker ps -q); do
+    name=$(docker inspect -f '{{.Name}}' $container)
+    status=$(docker inspect -f '{{.State.Status}}' $container)
+    restart_count=$(docker inspect -f '{{.RestartCount}}' $container)
+    memory=$(docker inspect -f '{{.HostConfig.Memory}}' $container)
+
+    echo &quot;容器: $name&quot;
+    echo &quot;  状态: $status&quot;
+    echo &quot;  重启次数: $restart_count&quot;
+    echo &quot;  内存限制: $((memory/1024/1024))MB&quot;
+    echo &quot;---&quot;
+done</code></pre>
+
+
+<h2 id="9">9. 常用组合命令</h2>
+<h3 id="91">9.1 快速诊断容器问题</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com故障诊断一键脚本
+#!/bin/bash
+CONTAINER=$1
+
+echo &quot;=== 容器基本信息 ===&quot;
+docker inspect -f '名称: {{.Name}}' $CONTAINER
+docker inspect -f '状态: {{.State.Status}}' $CONTAINER
+docker inspect -f '退出码: {{.State.ExitCode}}' $CONTAINER
+docker inspect -f '重启次数: {{.RestartCount}}' $CONTAINER
+
+echo -e &quot;\n=== 网络信息 ===&quot;
+docker inspect -f 'IP: {{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $CONTAINER
+docker inspect -f '端口: {{.NetworkSettings.Ports}}' $CONTAINER
+
+echo -e &quot;\n=== 资源信息 ===&quot;
+docker inspect -f '内存限制: {{.HostConfig.Memory}}' $CONTAINER
+docker inspect -f 'CPU限制: {{.HostConfig.NanoCpus}}' $CONTAINER
+
+echo -e &quot;\n=== 日志路径 ===&quot;
+docker inspect -f '{{.LogPath}}' $CONTAINER</code></pre>
+
+
+<h3 id="92">9.2 生成容器配置报告</h3>
+<pre class="codehilite"><code class="language-bash"># 生成容器配置报告（加班哥常用）
+docker inspect ops-not-nginx | jq '{
+  Name: .[0].Name,
+  Status: .[0].State.Status,
+  Image: .[0].Config.Image,
+  IP: .[0].NetworkSettings.IPAddress,
+  Ports: .[0].NetworkSettings.Ports,
+  Volumes: .[0].Mounts,
+  Memory: .[0].HostConfig.Memory,
+  RestartPolicy: .[0].HostConfig.RestartPolicy
+}' &gt; container_report.json</code></pre>
+
+
+<h2 id="10">10. 最后说两句</h2>
+<p><code>docker inspect</code> 用途极其广泛，建议保存几个常用的查询命令，遇到问题直接复制粘贴，说不定关键时刻能救命。比如一些常见的故障，ip冲突、dns无效、日志暴增、环境变量问题 等等</p>
+<p>加班哥现在的习惯是：<br>
+1. 容器有问题先看 <code>docker logs</code><br>
+2. 日志看不出来再用 <code>docker inspect</code> 查配置<br>
+3. 配置没问题就进容器 <code>docker exec</code> 排查</p>
+<blockquote>
+<p>本文由 opsnot.com 整理，转载请注明出处</p>
+</blockquote>
+
+        <div>
+          <ul style="display: inline-block;padding: 0;margin: 0 0 0.5em;color: #999;">
+            <li style="display: inline-block;margin: 0 1em 0 0;"><a href="/tech/docker-inspect-guide.html">📅 2025-10-30</a></li>
+          </ul>
+        </div>
+
+        <hr>
+
+        <div class="pagination">
+            <a href="https://blog.opsnot.com/tech/docker-commands-cheat-sheet.html" class="pagination-item prev-page">
+                <span class="pagination-arrow">←</span>
+                <span class="pagination-text">上一篇：<br>Docker高频命令实操手册，值得收藏！</span>
+            </a>
+            <a href="/archive.html" class="pagination-item next-page">
+                <span class="pagination-text">下一篇：<br>文章列表</span>
+                <span class="pagination-arrow">→</span>
+            </a>
+        </div>
+
+        
+
+        
+
+        <div class="nav-cell">
+            <p class="nav-list-title">能看到这里一定是真爱，订阅一下吧</p>
+            <img alt="" loading="lazy" src="/static/images/wx.sou1.png" />
+        </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="copy"> © opsnot</div>
+
+      <div class="link">
+        <a href="/comments.html" title="给我留言" target="_blank">留言</a>
+        <a href="/friends.html" title="友情链接" target="_blank">友链</a>
+      </div>
+    </div>
+  </footer>
+  
+  <script defer src="https://umami.opsnot.com/script.js" data-website-id="b1df419f-de4e-4b55-82fc-2aebae58afc7"></script>
+</body>
+</html>
