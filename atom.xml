@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
   <id>https://blog.opsnot.com</id>
   <title>运维不加班</title>
-  <updated>2025-10-29T15:47:57.085893+08:00</updated>
+  <updated>2025-10-30T21:35:00.483675+08:00</updated>
   <author>
     <name>运维不加班</name>
   </author>
@@ -10,6 +10,14 @@
   <link href="https://blog.opsnot.com/atom.xml" rel="self"/>
   <generator>Custom CMS v1.0</generator>
   <subtitle>运维不加班 的个人博客，欢迎订阅。</subtitle>
+  <entry>
+    <id>https://blog.opsnot.com/tech/docker-inspect-guide.html</id>
+    <title>Docker Inspect，值得族谱单开一页的命令</title>
+    <updated>2025-10-30T21:35:00.483675+08:00</updated>
+    <link href="https://blog.opsnot.com/tech/docker-inspect-guide.html"/>
+    <summary>深入了解如何使用 docker inspect 命令排查 Docker 容器问题，包括网络配置、资源限制、日志路径等，掌握容器信息的全面查看方法。</summary>
+    <published>2025-10-30T21:32:20.859656+08:00</published>
+  </entry>
   <entry>
     <id>https://blog.opsnot.com/tech/docker-commands-cheat-sheet.html</id>
     <title>Docker高频命令实操手册，值得收藏！</title>

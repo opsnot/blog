@@ -1,5 +1,12 @@
 [
   {
+    "url": "https://blog.opsnot.com/tech/docker-inspect-guide.html",
+    "title": "Docker Inspect，值得族谱单开一页的命令",
+    "content": "深入了解如何使用 docker inspect 命令排查 Docker 容器问题，包括网络配置、资源限制、日志路径等，掌握容器信息的全面查看方法。",
+    "keywords": "docker inspect, 容器排查, Docker问题排查, Docker容器配置, Docker日志, Docker网络配置, Docker资源限制, Docker重启策略, Docker数据卷, Docker环境变量, Docker健康检查",
+    "date": "2025-10-30"
+  },
+  {
     "url": "https://blog.opsnot.com/tech/docker-commands-cheat-sheet.html",
     "title": "Docker高频命令实操手册，值得收藏！",
     "content": "天天被问Docker命令怎么用？本文整理了日常95%的Docker操作命令，涵盖镜像、容器、日志、数据卷、网络等，都是干货，直接甩链接解决问题！",
