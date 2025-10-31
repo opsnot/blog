@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="applicable-device" content="pc,mobile">
+  <meta name="keywords" content="kubectl describe, Kubernetes排查, kubectl get, Pod排查, Node排查, Service排查, Deployment排查, PVC/PV排查, ConfigMap排查, Secret排查, Ingress排查" />
+  <meta name="description" content="本文详细解析了kubectl describe命令，涵盖Pod、Node、Service、Deployment等资源排查技巧，帮助你快速定位Kubernetes集群中的问题。" />
+  <link rel="alternate" type="application/rss+xml" title="运维不加班" href="https://blog.opsnot.com/feed.xml" />
+  <link rel="stylesheet" href="https://blog.opsnot.com/static/posts/css/ops-coffee.min.css" type="text/css" />
+
+  <!-- Begin SEO tag -->
+  <title>Kubectl Describe，k8s故障排查利器！</title>
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:site_name" content="运维不加班" />
+  <meta property="og:url" content="https://blog.opsnot.comtech/kubectl-describe-command-guide.html" />
+  <meta property="og:title" content="Kubectl Describe，k8s故障排查利器！" />
+  <meta property="og:description" content="本文详细解析了kubectl describe命令，涵盖Pod、Node、Service、Deployment等资源排查技巧，帮助你快速定位Kubernetes集群中的问题。" />
+  <link rel="canonical" href="https://blog.opsnot.comtech/kubectl-describe-command-guide.html" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Kubectl Describe，k8s故障排查利器！",
+    "description": "本文详细解析了kubectl describe命令，涵盖Pod、Node、Service、Deployment等资源排查技巧，帮助你快速定位Kubernetes集群中的问题。",
+    "url": "https://blog.opsnot.comtech/kubectl-describe-command-guide.html",
+    "author": {
+      "@type": "Person",
+      "name": "运维不加班"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "运维不加班",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://blog.opsnot.com/favicon.ico"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://blog.opsnot.comtech/kubectl-describe-command-guide.html"
+    }
+  }
+  </script>
+  <!-- End SEO tag -->
+</head>
+
+<body>
+  <div class="header">
+    <div class="menu-button">&#9776; 
+        <span class="menu-title">运维不加班</span>
+    </div> 
+
+    <div class="container">
+      <nav class="header-site">
+        <ul>
+          <li><a href="/">首页</a></li>
+            <li><a href="/tag/index.html" target="_self">标签</a></li>
+            <li><a href="/archive.html" target="_self">归档</a></li>
+          <li class="search"><a href="/search.html" target="_self" aria-label="搜索">🔍</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <header>
+    <div class="container">
+      <a href="/">
+        <div class="name">运维不加班</div>
+        <div class="slogan">唯有热爱，方能成就非凡，若无痴迷，岂能窥得天机</div>
+      </a>
+    </div>
+  </header>
+
+  <div id="content-wrap">
+    <div class="container">
+        <h1 id="art-title">Kubectl Describe，k8s故障排查利器！</h1>
+
+        <p>除了kubectl logs、events，kubectl describe 也是K8s排查问题必备命令，有点类似docker inspect，它返回结果比 <code>kubectl get</code> 详细，比YAML直观，用过都说好。本文内容较长，但都是干货，坚持看完一定会有收获！</p>
+<h2 id="1">1. 基础用法</h2>
+<h3 id="11-pod">1.1 查看Pod详情</h3>
+<pre class="codehilite"><code class="language-bash"># 查看Pod完整信息（opsnot最常用）
+kubectl describe pod opsnot-postgresql
+
+# 指定命名空间
+kubectl describe pod my-pod -n opsnot-postgresql
+
+# 查看所有Pod（opsnot.com提醒：要慎用！输出太多！）
+kubectl describe pods</code></pre>
+
+
+<h3 id="12">1.2 查看不同资源</h3>
+<pre class="codehilite"><code class="language-bash"># 查看Deployment（opsnot.com常用）
+kubectl describe deployment opsnot-mariadb
+
+# 查看Service
+kubectl describe service opsnot-service
+
+# 查看Node
+kubectl describe node node-mariadb
+
+# 查看ConfigMap
+kubectl describe configmap mariadb-config
+
+# 查看Secret（敏感信息会隐藏）
+kubectl describe secret mariadb-secret</code></pre>
+
+
+<h2 id="2-pod">2. Pod排查技巧</h2>
+<h3 id="21-pod">2.1 查看Pod事件（重点关注）</h3>
+<pre class="codehilite"><code class="language-bash"># 直接看Pod信息，重点看最底部的Events
+kubectl describe pod ops-elasticsearch -n prod
+
+# opsnot.com经验：Events是排查问题的关键！
+# 看到ImagePullBackOff、CrashLoopBackOff都能找到原因</code></pre>
+
+
+<p><strong>实操案例</strong>：某Pod一直Pending，用describe一看Events：</p>
+<pre class="codehilite"><code>Warning  FailedScheduling  node didn't have enough memory</code></pre>
+
+
+<p>很明显内存不足，调整下requests轻松解决。</p>
+<h3 id="22">2.2 查看容器状态</h3>
+<pre class="codehilite"><code class="language-bash"># Pod describe里会显示：
+ - 容器状态（Running/Waiting/Terminated）
+ - 重启次数
+ - 退出码
+ - 最后一次重启原因
+
+kubectl describe pod my-elasticsearch | grep -A 10 &quot;State:&quot;
+kubectl describe pod my-elasticsearch | grep &quot;Restart Count&quot;</code></pre>
+
+
+<p><strong>实操案例</strong>：容器反复重启，describe显示：</p>
+<pre class="codehilite"><code>Last State: Terminated
+  Reason: Error
+  Exit Code: 137</code></pre>
+
+
+<p>容器退出码137，那就是OOM killed了，内存调大些就ok了。</p>
+<h3 id="23">2.3 查看资源使用情况</h3>
+<pre class="codehilite"><code class="language-bash"># describe会显示requests和limits
+kubectl describe pod opsnot-redis | grep -A 5 &quot;Limits:&quot;
+kubectl describe pod opsnot-redis | grep -A 5 &quot;Requests:&quot;
+
+# 查看实际分配的资源
+kubectl describe pod ops-not-kafka | grep &quot;QoS Class&quot;</code></pre>
+
+
+<p><strong>实操案例</strong>：集群资源紧张，这个命令可以找到那些设置了过高的requests但实际用不到的Pod，优化资源，节能提效</p>
+<h2 id="3-node">3. Node排查</h2>
+<h3 id="31-node">3.1 查看Node健康状态</h3>
+<pre class="codehilite"><code class="language-bash"># 查看Node详情
+kubectl describe node worker-node-1
+
+# 重点看Conditions部分（opsnot.com推荐）
+kubectl describe node worker-node-1 | grep -A 10 &quot;Conditions:&quot;
+
+# 常见状态：
+# Ready: True/False
+# MemoryPressure: True/False
+# DiskPressure: True/False
+# PIDPressure: True/False</code></pre>
+
+
+<p><strong>实操案例</strong>：Pod调度不上node节点，describe node发现：</p>
+<pre class="codehilite"><code>DiskPressure: True
+Message: kubelet has disk pressure</code></pre>
+
+
+<p>很明显是磁盘占满了，清理即可，一般都是日志爆了。</p>
+<h3 id="32-node">3.2 查看Node资源分配</h3>
+<pre class="codehilite"><code class="language-bash"># 查看Node上的资源使用情况（加班哥推荐）
+kubectl describe node worker-node-1 | grep -A 20 &quot;Allocated resources:&quot;
+
+# 会显示：
+# CPU Requests: 1200m (60% of 2 cores)
+# Memory Requests: 4Gi (50% of 8Gi)</code></pre>
+
+
+<h3 id="33-nodepod">3.3 查看Node上的Pod</h3>
+<pre class="codehilite"><code class="language-bash"># describe node会列出该节点上的所有Pod及其资源占用情况（加班哥墙裂推荐：非常好用！！！）
+kubectl describe node worker-node-1 | grep -A 50 &quot;Non-terminated Pods:&quot;
+
+# 返回一般是这样的：
+Non-terminated Pods:          (10 in total)
+  Namespace                   Name                CPU Requests  CPU Limits  Memory Requests  Memory Limits  Age
+  ---------                   ----                ------------  ----------  ---------------  -------------  ---
+  default                     nginx-opsnot-abc12  100m (2%)     200m (5%)   128Mi (1%)       256Mi (3%)     5d
+  default                     redis-xyz34         50m (1%)      100m (2%)   64Mi (0%)        128Mi (1%)     3d
+  kube-system                 kube-proxy-5678     100m (2%)     0 (0%)      64Mi (0%)        0 (0%)         15d
+  kube-system                 coredns-1234        100m (2%)     200m (5%)   70Mi (0%)        170Mi (2%)     15d</code></pre>
+
+
+<h2 id="4-service">4. Service排查</h2>
+<h3 id="41-service">4.1 查看Service配置</h3>
+<pre class="codehilite"><code class="language-bash"># 查看Service详情
+kubectl describe service ops-not-service
+
+# 重点看：
+# - Selector: 匹配哪些Pod
+# - Endpoints: 实际关联的Pod IP
+# - Port配置
+kubectl describe svc my-service | grep Selector
+kubectl describe svc my-service | grep Endpoints</code></pre>
+
+
+<p><strong>实操案例</strong>：Service访问不通，describe发现Endpoints是空的：</p>
+<pre class="codehilite"><code>Endpoints: &lt;none&gt;</code></pre>
+
+
+<p>一般是Selector写错了，Pod的Label不匹配，改下Label就行了</p>
+<h3 id="42-service">4.2 检查Service类型和端口</h3>
+<pre class="codehilite"><code class="language-bash"># 查看Service暴露方式
+kubectl describe svc ops-not-service | grep Type
+# Type: ClusterIP / NodePort / LoadBalancer
+
+# 查看端口映射
+kubectl describe svc ops-not-service | grep Port</code></pre>
+
+
+<h2 id="5-deploymentstatefulset">5. Deployment/StatefulSet排查</h2>
+<h3 id="51">5.1 查看副本状态</h3>
+<pre class="codehilite"><code class="language-bash"># 查看Deployment
+kubectl describe deployment opsnot-rabbitmq
+
+# 重点关注：
+# - Replicas: 期望数量 vs 实际运行数量
+# - Conditions: 部署状态
+# - Events: 滚动更新记录
+kubectl describe deploy opsnot-rabbitmq | grep Replicas
+kubectl describe deploy opsnot-rabbitmq | grep -A 5 &quot;Conditions:&quot;</code></pre>
+
+
+<p><strong>实操案例</strong>：发版后只有一部分Pod更新成功，describe显示：</p>
+<pre class="codehilite"><code>Replicas: 3 desired | 2 updated | 3 total | 2 available
+Conditions:
+  Progressing: False
+  Reason: ProgressDeadlineExceeded</code></pre>
+
+
+<p>这种情况基本是新版本镜像有问题导致Pod起不来，直接回滚</p>
+<h3 id="52">5.2 查看滚动更新策略</h3>
+<pre class="codehilite"><code class="language-bash"># 查看更新策略
+kubectl describe deploy opsnot-rabbitmq | grep -A 3 &quot;StrategyType:&quot;
+
+# 输出示例：
+# StrategyType: RollingUpdate
+# RollingUpdateStrategy:
+#   Max Surge: 25%
+#   Max Unavailable: 25%</code></pre>
+
+
+<h2 id="6-pvcpv">6. PVC/PV存储排查</h2>
+<h3 id="61-pvc">6.1 查看PVC状态</h3>
+<pre class="codehilite"><code class="language-bash"># 查看PVC
+kubectl describe pvc opsnot-pvc
+
+# 重点看：
+# - Status: Bound/Pending
+# - Volume: 绑定的PV名称
+# - Capacity: 实际容量
+# - Events: 绑定失败原因</code></pre>
+
+
+<p><strong>实操场景</strong>：PVC一直Pending，describe显示：</p>
+<pre class="codehilite"><code>Events:
+  Warning  ProvisioningFailed  no volume plugin matched</code></pre>
+
+
+<p>基本是StorageClass配置错误，改一下就行了</p>
+<h3 id="62-pv">6.2 查看PV详情</h3>
+<pre class="codehilite"><code class="language-bash"># 查看PV
+kubectl describe pv opsnot-pv-name
+
+# 重点看：
+# - Status: Available/Bound/Released
+# - Claim: 被哪个PVC使用
+# - Reclaim Policy: Delete/Retain
+# - Access Modes: ReadWriteOnce/ReadWriteMany</code></pre>
+
+
+<h2 id="7-configmapsecret">7. ConfigMap/Secret排查</h2>
+<h3 id="71-configmap">7.1 查看ConfigMap</h3>
+<pre class="codehilite"><code class="language-bash"># 查看ConfigMap详情
+kubectl describe configmap my-config
+
+# 会显示所有键值对（opsnot.com提醒：数据量大的话会截断）
+kubectl describe cm my-config | grep -A 20 &quot;Data&quot;
+
+#为什么会截断？
+kubectl describe 命令有输出长度限制，主要是为了：
+
+防止终端被大量输出淹没
+提高命令响应速度
+避免网络传输过大数据
+
+#查看cm被截断了怎么办？
+看yaml呗，这玩意是完整的</code></pre>
+
+
+<h3 id="72-secret">7.2 查看Secret</h3>
+<pre class="codehilite"><code class="language-bash"># 查看Secret（数据会被隐藏）
+kubectl describe secret my-secret
+
+# 输出示例：
+# Data
+# ====
+# password: 16 bytes
+# username: 8 bytes
+
+# opsnot提示：真实数据不会显示，只显示大小</code></pre>
+
+
+<h2 id="8-ingress">8. Ingress排查</h2>
+<h3 id="81-ingress">8.1 查看Ingress规则</h3>
+<pre class="codehilite"><code class="language-bash"># 查看Ingress
+kubectl describe ingress my-ingress
+
+# 重点看：
+# - Rules: 路由规则
+# - Backend: 后端Service
+# - Events: 配置更新记录
+kubectl describe ing my-ingress | grep -A 20 &quot;Rules:&quot;</code></pre>
+
+
+<h3 id="82-ingress">8.2 查看Ingress地址</h3>
+<pre class="codehilite"><code class="language-bash"># 查看Ingress分配的IP
+kubectl describe ingress opsnot-ingress | grep Address
+
+# 查看TLS配置
+kubectl describe ing opsnot-ingress | grep -A 5 &quot;TLS:&quot;</code></pre>
+
+
+<h2 id="9">9. 实战技巧</h2>
+<h3 id="91-pod">9.1 快速定位问题Pod</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com故障排查脚本
+#!/bin/bash
+NS=${1:-default}
+
+echo &quot;=== 查找 $NS 命名空间中的异常 Pod ===&quot;
+
+# 检查命名空间是否存在
+if ! kubectl get ns $NS &amp;&gt; /dev/null; then
+    echo &quot;错误: 命名空间 $NS 不存在!&quot;
+    exit 1
+fi
+
+# 获取异常 Pod 列表
+PODS=$(kubectl get pods -n $NS --field-selector=status.phase!=Running -o name 2&gt;/dev/null)
+
+if [ -z &quot;$PODS&quot; ]; then
+    echo &quot;加班哥没有发现异常 Pod&quot;
+    exit 0
+fi
+
+for pod in $PODS; do
+    echo &quot;--- $pod ---&quot;
+    kubectl describe $pod -n $NS | grep -A 15 &quot;Events:&quot;
+    echo &quot;================================&quot;
+done</code></pre>
+
+
+<h3 id="92">9.2 批量检查资源</h3>
+<pre class="codehilite"><code class="language-bash"># 检查所有Node状态
+for node in $(kubectl get nodes -o name); do
+    echo &quot;=== $node ===&quot;
+    kubectl describe $node | grep -A 5 &quot;Conditions:&quot;
+done
+
+# 检查命名空间内所有Service的Endpoints
+kubectl get svc -n prod -o name | while read svc; do
+    echo &quot;$svc:&quot;
+    kubectl describe $svc -n prod | grep Endpoints
+done</code></pre>
+
+
+<h3 id="93">9.3 查看最近的事件</h3>
+<pre class="codehilite"><code class="language-bash"># Pod最近的事件（按时间排序）
+kubectl describe pod ops-not-pod | grep -A 50 &quot;Events:&quot; | tail -20
+
+# 所有资源的事件
+kubectl get events --sort-by=.metadata.creationTimestamp
+
+# opsnot经验：结合describe和events一起看
+kubectl describe pod ops-not-pod &amp;&amp; kubectl get events --field-selector involvedObject.name=my-pod</code></pre>
+
+
+<h3 id="94">9.4 导出完整信息用于排查</h3>
+<pre class="codehilite"><code class="language-bash"># 导出Pod完整信息
+kubectl describe pod ops-not-pod &gt; pod-describe.txt
+
+# 导出所有资源信息
+kubectl describe all -n production &gt; cluster-info.txt</code></pre>
+
+
+<h2 id="10">10. 常见问题排查清单</h2>
+<h3 id="101-pod">10.1 Pod起不来</h3>
+<pre class="codehilite"><code class="language-bash"># 1. 先看Pod状态
+kubectl get pod ops-not-mysql
+
+# 2. describe看Events
+kubectl describe pod ops-not-mysql
+
+# 常见原因：
+ - ImagePullBackOff: 镜像拉取失败
+ - CrashLoopBackOff: 容器启动后立即退出
+ - Pending: 资源不足或调度失败
+ - Error: 配置错误</code></pre>
+
+
+<h3 id="102-service">10.2 Service不通</h3>
+<pre class="codehilite"><code class="language-bash"># 1. 检查Service的Endpoints
+kubectl describe svc opsnot-nginx-service | grep Endpoints
+
+# 2. 如果Endpoints为空，检查Selector
+kubectl describe svc opsnot-nginx-service | grep Selector
+kubectl get pods --show-labels
+
+# 3. 检查Pod是否Ready
+kubectl get pods -l app=opsnot-blog</code></pre>
+
+
+<h3 id="103">10.3 网络问题</h3>
+<pre class="codehilite"><code class="language-bash"># 1. 检查Pod IP
+kubectl describe pod my-pod | grep &quot;IP:&quot;
+
+# 2. 检查Service ClusterIP
+kubectl describe svc my-service | grep &quot;IP:&quot;
+
+# 3. 检查DNS
+kubectl describe pod my-pod | grep -A 5 &quot;DNS&quot;
+
+# 加班哥排查流程：
+# Pod -&gt; Service -&gt; Ingress 逐层排查</code></pre>
+
+
+<h3 id="104">10.4 资源不足</h3>
+<pre class="codehilite"><code class="language-bash"># 1. 检查Node资源
+kubectl describe nodes | grep -A 10 &quot;Allocated resources:&quot;
+
+# 2. 检查Pod资源配置
+kubectl describe pod opsnot-pod | grep -A 5 &quot;Limits:&quot;
+
+# 3. 看Events里有没有资源不足的告警
+kubectl describe pod opsnot-pod | grep &quot;Insufficient&quot;</code></pre>
+
+
+<h2 id="11">11. 进阶用法</h2>
+<h3 id="111">11.1 结合其他命令使用</h3>
+<pre class="codehilite"><code class="language-bash"># describe + logs 组合排查
+kubectl describe pod my-pod &amp;&amp; kubectl logs my-pod --tail=50
+
+# describe + exec 组合
+kubectl describe pod my-pod
+kubectl exec -it my-pod -- sh
+
+# describe + top 查看资源使用
+kubectl describe pod my-pod
+kubectl top pod my-pod</code></pre>
+
+
+<h3 id="112-watch">11.2 使用watch实时监控</h3>
+<pre class="codehilite"><code class="language-bash"># 实时监控Pod变化（加班哥常用）
+watch -n 2 'kubectl describe pod opsnot-pod | grep -A 10 &quot;Events:&quot;'
+
+# 实时监控Node状态
+watch kubectl describe node worker-1 | grep &quot;Allocated resources:&quot; -A 20</code></pre>
+
+
+<h3 id="113">11.3 格式化输出关键信息</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com自用脚本：快速查看Pod关键信息
+#!/bin/bash
+POD=$1
+NS=${2:-default}
+
+echo &quot;=== 基本信息 ===&quot;
+kubectl describe pod $POD -n $NS | grep &quot;Status:\|IP:\|Node:&quot;
+
+echo -e &quot;\n=== 容器状态 ===&quot;
+kubectl describe pod $POD -n $NS | grep &quot;State:&quot; -A 3
+
+echo -e &quot;\n=== 重启信息 ===&quot;
+kubectl describe pod $POD -n $NS | grep &quot;Restart Count&quot;
+
+echo -e &quot;\n=== 最近事件 ===&quot;
+kubectl describe pod $POD -n $NS | grep &quot;Events:&quot; -A 15 | tail -10</code></pre>
+
+
+<h2 id="12_1">12. 性能优化提示</h2>
+<pre class="codehilite"><code class="language-bash"># describe输出很多，用管道过滤关键信息
+kubectl describe pod ops-not-pod | grep -E &quot;Status:|Events:|State:|Restart&quot;
+
+# 只看特定命名空间，避免全局搜索
+kubectl describe pods -n opsnot-namespace
+
+# 结合-o wide查看更多信息
+kubectl get pods -o wide
+kubectl describe pod ops-not-pod
+
+# opsnot.com建议：先用get快速定位，再用describe详细排查</code></pre>
+
+
+<h2 id="13">13. 最后</h2>
+<p><code>kubectl describe</code> 输出内容极其丰富，实为排查问题一利器，以上内容基本涵盖describe所有场景。
+感谢大家耐心看完，如果觉得有帮助，请帮忙点赞转发，加班哥继续加班输出干货！</p>
+<blockquote>
+<p>本文由 opsnot.com 整理，转载请注明出处，喜欢就关注一下吧！</p>
+</blockquote>
+
+        <div>
+          <ul style="display: inline-block;padding: 0;margin: 0 0 0.5em;color: #999;">
+            <li style="display: inline-block;margin: 0 1em 0 0;"><a href="/tech/kubectl-describe-command-guide.html">📅 2025-10-31</a></li>
+          </ul>
+        </div>
+
+        <hr>
+
+        <div class="pagination">
+            <a href="https://blog.opsnot.com/tech/docker-inspect-guide.html" class="pagination-item prev-page">
+                <span class="pagination-arrow">←</span>
+                <span class="pagination-text">上一篇：<br>Docker Inspect，值得族谱单开一页的命令</span>
+            </a>
+            <a href="/archive.html" class="pagination-item next-page">
+                <span class="pagination-text">下一篇：<br>文章列表</span>
+                <span class="pagination-arrow">→</span>
+            </a>
+        </div>
+
+        
+
+        
+
+        <div class="nav-cell">
+            <p class="nav-list-title">能看到这里一定是真爱，订阅一下吧</p>
+            <img alt="" loading="lazy" src="/static/images/wx.sou1.png" />
+        </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="copy"> © opsnot</div>
+
+      <div class="link">
+        <a href="/comments.html" title="给我留言" target="_blank">留言</a>
+        <a href="/friends.html" title="友情链接" target="_blank">友链</a>
+      </div>
+    </div>
+  </footer>
+  
+  <script defer src="https://umami.opsnot.com/script.js" data-website-id="b1df419f-de4e-4b55-82fc-2aebae58afc7"></script>
+</body>
+</html>
