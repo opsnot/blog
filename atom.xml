@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
   <id>https://blog.opsnot.com</id>
   <title>运维不加班</title>
-  <updated>2025-10-30T21:35:00.483675+08:00</updated>
+  <updated>2025-10-31T20:12:09.520583+08:00</updated>
   <author>
     <name>运维不加班</name>
   </author>
@@ -10,6 +10,14 @@
   <link href="https://blog.opsnot.com/atom.xml" rel="self"/>
   <generator>Custom CMS v1.0</generator>
   <subtitle>运维不加班 的个人博客，欢迎订阅。</subtitle>
+  <entry>
+    <id>https://blog.opsnot.com/tech/kubectl-describe-command-guide.html</id>
+    <title>Kubectl Describe，k8s故障排查利器！</title>
+    <updated>2025-10-31T20:12:09.520583+08:00</updated>
+    <link href="https://blog.opsnot.com/tech/kubectl-describe-command-guide.html"/>
+    <summary>本文详细解析了kubectl describe命令，涵盖Pod、Node、Service、Deployment等资源排查技巧，帮助你快速定位Kubernetes集群中的问题。</summary>
+    <published>2025-10-31T20:12:09.493986+08:00</published>
+  </entry>
   <entry>
     <id>https://blog.opsnot.com/tech/docker-inspect-guide.html</id>
     <title>Docker Inspect，值得族谱单开一页的命令</title>

@@ -1,5 +1,12 @@
 [
   {
+    "url": "https://blog.opsnot.com/tech/kubectl-describe-command-guide.html",
+    "title": "Kubectl Describe，k8s故障排查利器！",
+    "content": "本文详细解析了kubectl describe命令，涵盖Pod、Node、Service、Deployment等资源排查技巧，帮助你快速定位Kubernetes集群中的问题。",
+    "keywords": "kubectl describe, Kubernetes排查, kubectl get, Pod排查, Node排查, Service排查, Deployment排查, PVC/PV排查, ConfigMap排查, Secret排查, Ingress排查",
+    "date": "2025-10-31"
+  },
+  {
     "url": "https://blog.opsnot.com/tech/docker-inspect-guide.html",
     "title": "Docker Inspect，值得族谱单开一页的命令",
     "content": "深入了解如何使用 docker inspect 命令排查 Docker 容器问题，包括网络配置、资源限制、日志路径等，掌握容器信息的全面查看方法。",
