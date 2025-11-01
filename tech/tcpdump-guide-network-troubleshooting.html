@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="applicable-device" content="pc,mobile">
+  <meta name="keywords" content="tcpdump, 网络抓包, 网络故障排查, 接口超时, HTTP请求, MySQL流量, SYN洪水攻击, 网络延迟, Wireshark, 网络性能优化" />
+  <meta name="description" content="本文详细介绍了tcpdump的使用方法，包括基础抓包、高级过滤器、保存和读取数据包、性能调优等，帮助你快速定位和解决网络故障问题。" />
+  <link rel="alternate" type="application/rss+xml" title="运维不加班" href="https://blog.opsnot.com/feed.xml" />
+  <link rel="stylesheet" href="https://blog.opsnot.com/static/posts/css/ops-coffee.min.css" type="text/css" />
+
+  <!-- Begin SEO tag -->
+  <title>运维火眼金睛之  tcpdump抓包实操手册</title>
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:site_name" content="运维不加班" />
+  <meta property="og:url" content="https://blog.opsnot.comtech/tcpdump-guide-network-troubleshooting.html" />
+  <meta property="og:title" content="运维火眼金睛之  tcpdump抓包实操手册" />
+  <meta property="og:description" content="本文详细介绍了tcpdump的使用方法，包括基础抓包、高级过滤器、保存和读取数据包、性能调优等，帮助你快速定位和解决网络故障问题。" />
+  <link rel="canonical" href="https://blog.opsnot.comtech/tcpdump-guide-network-troubleshooting.html" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "运维火眼金睛之  tcpdump抓包实操手册",
+    "description": "本文详细介绍了tcpdump的使用方法，包括基础抓包、高级过滤器、保存和读取数据包、性能调优等，帮助你快速定位和解决网络故障问题。",
+    "url": "https://blog.opsnot.comtech/tcpdump-guide-network-troubleshooting.html",
+    "author": {
+      "@type": "Person",
+      "name": "运维不加班"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "运维不加班",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://blog.opsnot.com/favicon.ico"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://blog.opsnot.comtech/tcpdump-guide-network-troubleshooting.html"
+    }
+  }
+  </script>
+  <!-- End SEO tag -->
+</head>
+
+<body>
+  <div class="header">
+    <div class="menu-button">&#9776; 
+        <span class="menu-title">运维咖啡吧</span>
+    </div> 
+
+    <div class="container">
+      <nav class="header-site">
+        <ul>
+          <li><a href="/">首页</a></li>
+            <li><a href="/tag/index.html" target="_self">标签</a></li>
+            <li><a href="/archive.html" target="_self">归档</a></li>
+          <li class="search"><a href="/search.html" target="_self" aria-label="搜索">🔍</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <header>
+    <div class="container">
+      <a href="/">
+        <div class="name">运维不加班</div>
+        <div class="slogan">唯有热爱，方能成就非凡，若无痴迷，岂能窥得天机</div>
+      </a>
+    </div>
+  </header>
+
+  <div id="content-wrap">
+    <div class="container">
+        <h1 id="art-title">运维火眼金睛之  tcpdump抓包实操手册</h1>
+
+        <h4 id="_1">你是否遇到过这些场景</h4>
+<p>接口突然大面积超时？<br>
+http请求缓慢或API返回间歇性失败?<br>
+service流量转发异常？<br>
+NAT网关端口耗尽？<br>
+syn洪水攻击？<br>
+数据库复制延迟巨大？<br>
+ARP风暴，交换机端口疯狂闪灯？</p>
+<h4 id="_2">你需要抓包了！</h4>
+<p>OK！今天加班哥就来更一篇抓包神器 - tcpdump</p>
+<h2 id="1">1. 基础抓包，先把地基打牢</h2>
+<h3 id="11">1.1 最简单的抓包</h3>
+<pre class="codehilite"><code class="language-bash"># 这是最基础的命令，但在生产环境几乎没人这么用，因为刷屏太快根本看不清。
+tcpdump -i eth0</code></pre>
+
+
+<h3 id="12">1.2 加上常用参数</h3>
+<pre class="codehilite"><code class="language-bash"># 参数解释：
+# -i eth0：指定网卡，用 `any` 可以监听所有网卡
+# -nn：不解析主机名和端口名，直接显示IP和数字端口（提升性能）
+# -tttt：显示人类可读的时间戳
+tcpdump -i eth0 -nn -tttt</code></pre>
+
+
+<h3 id="13">1.3 控制显示长度</h3>
+<pre class="codehilite"><code class="language-bash"># 默认tcpdump只抓取每个包的前96字节，HTTP请求体可能被截断
+# opsnot.com - 抓取完整数据包，不截断。排查应用层问题时很重要。
+tcpdump -i eth0 -nn -s 0</code></pre>
+
+
+<h3 id="14">1.4 限制抓包数量</h3>
+<pre class="codehilite"><code class="language-bash"># 加班哥常用：测试时别让它无限抓下去，抓100个包后自动停止。
+tcpdump -i eth0 -nn -c 100</code></pre>
+
+
+<h2 id="2-tcpdump">2. 过滤器，这才是tcpdump的灵魂</h2>
+<h3 id="21">2.1 按端口过滤</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com 抓取HTTP流量：
+tcpdump -i eth0 -nn port 80</code></pre>
+
+
+<pre class="codehilite"><code class="language-bash"># by opsnot 抓取MySQL流量：
+tcpdump -i eth0 -nn port 3306</code></pre>
+
+
+<pre class="codehilite"><code class="language-bash"># opsnot.com 端口范围过滤（抓1000-2000端口）
+tcpdump -i eth0 -nn portrange 1000-2000</code></pre>
+
+
+<h3 id="22">2.2 按主机过滤</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com 抓取与特定服务器的所有通信
+tcpdump -i eth0 -nn host 192.168.1.100</code></pre>
+
+
+<pre class="codehilite"><code class="language-bash"># opsnot.com 只抓源地址
+tcpdump -i eth0 -nn src host 192.168.1.100</code></pre>
+
+
+<pre class="codehilite"><code class="language-bash"># opsnot 只抓目标地址
+tcpdump -i eth0 -nn dst host 192.168.1.100</code></pre>
+
+
+<pre class="codehilite"><code class="language-bash"># opsnot.com 抓取整个网段
+tcpdump -i eth0 -nn net 192.168.1.0/24</code></pre>
+
+
+<h3 id="23">2.3 按协议过滤</h3>
+<pre class="codehilite"><code class="language-bash"># author: opsnot 只抓TCP包
+tcpdump -i eth0 -nn tcp</code></pre>
+
+
+<pre class="codehilite"><code class="language-bash"># opsnot.com 只抓UDP包
+tcpdump -i eth0 -nn udp</code></pre>
+
+
+<pre class="codehilite"><code class="language-bash"># by opsnot 只抓ICMP包（ping）
+tcpdump -i eth0 -nn icmp</code></pre>
+
+
+<h3 id="24">2.4 逻辑组合，真正的威力</h3>
+<pre class="codehilite"><code class="language-bash"># 与操作（同时满足多个条件）- 抓取来自192.168.1.100且访问80端口的包
+tcpdump -i eth0 -nn 'host 192.168.1.100 and port 80'</code></pre>
+
+
+<pre class="codehilite"><code class="language-bash"># 或操作（满足任一条件）- 抓取HTTP或HTTPS流量
+tcpdump -i eth0 -nn 'port 80 or port 443'</code></pre>
+
+
+<pre class="codehilite"><code class="language-bash"># opsnot.com 非操作（排除某些流量）- 抓取除SSH外的所有流量
+tcpdump -i eth0 -nn 'port not 22'</code></pre>
+
+
+<pre class="codehilite"><code class="language-bash"># by 加班哥
+# 复杂组合- 抓取来自特定网段访问web服务的流量
+# 注意：复杂表达式一定要加引号，否则shell会误解析。
+tcpdump -i eth0 -nn 'src net 192.168.1.0/24 and (port 80 or port 443)'</code></pre>
+
+
+<h2 id="3">3. 保存和读取，长期作战必备</h2>
+<h3 id="31">3.1 基础保存</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com 生成的pcap文件可以用Wireshark打开，图形化分析更直观。
+tcpdump -i eth0 -nn -w /tmp/capture.pcap</code></pre>
+
+
+<h3 id="32">3.2 按大小切割文件</h3>
+<pre class="codehilite"><code class="language-bash"># author: opsnot - 单个文件太大不好传输和分析，每个文件100MB，自动切割
+# -C 参数单位是**MB**（1,000,000字节），会生成 `capture.pcap1`、`capture.pcap2`...
+tcpdump -i eth0 -nn -w /tmp/capture.pcap -C 100</code></pre>
+
+
+<h3 id="33">3.3 按数量循环覆盖</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com - 避免磁盘被撑爆，每个文件50MB，最多保留10个
+# 最多占用500MB，超过10个文件后会覆盖最老的文件（从pcap0开始循环）
+tcpdump -i eth0 -nn -w /tmp/capture.pcap -C 50 -W 10</code></pre>
+
+
+<h3 id="34">3.4 按时间切割</h3>
+<pre class="codehilite"><code class="language-bash"># by opsnot - 每3600秒（1小时）切割一次，会保留24小时的数据，文件名自动带时间戳
+tcpdump -i eth0 -nn -w /tmp/capture.pcap -G 3600 -W 24</code></pre>
+
+
+<h3 id="35">3.5 带时间戳的文件名</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com 生成类似 `capture_20250101_143025.pcap` 的文件名
+tcpdump -i eth0 -nn -w /tmp/capture_$(date +%Y%m%d_%H%M%S).pcap</code></pre>
+
+
+<h3 id="36-pcap">3.6 读取pcap文件</h3>
+<pre class="codehilite"><code class="language-bash"># author: opsnot
+tcpdump -nn -r /tmp/capture.pcap</code></pre>
+
+
+<pre class="codehilite"><code class="language-bash"># opsnot.com 读取时也可以加过滤条件，只显示符合条件的包，分析效率更高
+tcpdump -nn -r /tmp/capture.pcap 'port 3306 and host 10.0.1.50'</code></pre>
+
+
+<h2 id="4">4. 查看包内容，深入应用层</h2>
+<h3 id="41-ascii">4.1 ASCII格式显示</h3>
+<pre class="codehilite"><code class="language-bash"># by opsnot
+# -A 参数会以ASCII显示包内容，适合查看HTTP请求和响应
+tcpdump -i eth0 -nn -A port 80</code></pre>
+
+
+<h3 id="42">4.2 十六进制显示</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com
+# -X 同时显示十六进制和ASCII，排查二进制协议时很有用。
+tcpdump -i eth0 -nn -X port 80</code></pre>
+
+
+<h3 id="43">4.3 只显示十六进制</h3>
+<pre class="codehilite"><code class="language-bash"># author: opsnot
+# -x 只显示十六进制，不显示ASCII。
+tcpdump -i eth0 -nn -x port 3306</code></pre>
+
+
+<h3 id="44">4.4 增加详细程度</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com - 详细模式
+# -v、-vv、-vvv 三个级别，越多越详细，会显示TTL、IP选项、校验和等信息
+tcpdump -i eth0 -nn -v port 80</code></pre>
+
+
+<h2 id="5-tcp">5. TCP标志位过滤，排查连接问题</h2>
+<h3 id="51-syn">5.1 抓取SYN包（新连接请求）</h3>
+<pre class="codehilite"><code class="language-bash"># by opsnot - 只抓SYN包，不包括SYN-ACK。用来统计新建连接数
+tcpdump -i eth0 -nn 'tcp[tcpflags] &amp; tcp-syn != 0 and tcp[tcpflags] &amp; tcp-ack == 0'</code></pre>
+
+
+<h3 id="52-syn-ack">5.2 抓取SYN-ACK包</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com - 服务器回应客户端的SYN-ACK包
+tcpdump -i eth0 -nn 'tcp[tcpflags] &amp; (tcp-syn|tcp-ack) == (tcp-syn|tcp-ack)'</code></pre>
+
+
+<h3 id="53-rst">5.3 抓取RST包（连接重置）</h3>
+<pre class="codehilite"><code class="language-bash"># author: opsnot
+# RST包通常意味着连接异常关闭，是排查连接问题的关键
+tcpdump -i eth0 -nn 'tcp[tcpflags] &amp; tcp-rst != 0'</code></pre>
+
+
+<h3 id="54-fin">5.4 抓取FIN包（正常关闭）</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com
+tcpdump -i eth0 -nn 'tcp[tcpflags] &amp; tcp-fin != 0'</code></pre>
+
+
+<h3 id="55-psh">5.5 抓取PSH包（立即推送数据）</h3>
+<pre class="codehilite"><code class="language-bash"># by opsnot - 应用层数据传输时会设置PSH标志
+tcpdump -i eth0 -nn 'tcp[tcpflags] &amp; tcp-push != 0'</code></pre>
+
+
+<h3 id="56">5.6 只看三次握手过程</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com
+tcpdump -i eth0 -nn 'tcp[tcpflags] &amp; (tcp-syn|tcp-ack) != 0' -c 100</code></pre>
+
+
+<h2 id="6-http">6. HTTP协议深度过滤</h2>
+<h3 id="61-http-get">6.1 抓取HTTP GET请求</h3>
+<pre class="codehilite"><code class="language-bash"># author: opsnot
+# 原理：`tcp[12:1] &amp; 0xf0) &gt;&gt; 2` 计算TCP头长度（字节），然后从TCP payload开始位置读取4字节，`0x47455420` 是 &quot;GET &quot; 的十六进制ASCII码（注意空格）
+tcpdump -i eth0 -nn -A -s 0 'tcp port 80 and (tcp[((tcp[12:1] &amp; 0xf0) &gt;&gt; 2):4] = 0x47455420)'</code></pre>
+
+
+<h3 id="62-http-post">6.2 抓取HTTP POST请求</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com - '0x504f5354' 是 &quot;POST&quot; 的十六进制（4字节）
+tcpdump -i eth0 -nn -A -s 0 'tcp port 80 and (tcp[((tcp[12:1] &amp; 0xf0) &gt;&gt; 2):4] = 0x504f5354)'</code></pre>
+
+
+<h3 id="63-http">6.3 抓取HTTP响应</h3>
+<pre class="codehilite"><code class="language-bash"># by opsnot - '0x48545450' 是 &quot;HTTP&quot; 的十六进制（4字节），匹配HTTP响应的开头
+tcpdump -i eth0 -nn -A -s 0 'tcp port 80 and (tcp[((tcp[12:1] &amp; 0xf0) &gt;&gt; 2):4] = 0x48545450)'</code></pre>
+
+
+<h3 id="64-url">6.4 抓取特定URL</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com - 抓取包含/api/user的请求
+# 配合grep使用，实时过滤URL
+tcpdump -i eth0 -nn -A -s 0 'tcp port 80' | grep -i 'GET /api/user'</code></pre>
+
+
+<h3 id="65-user-agent">6.5 抓取特定User-Agent</h3>
+<pre class="codehilite"><code class="language-bash"># author: opsnot - 排查爬虫或特定客户端的请求
+tcpdump -i eth0 -nn -A -s 0 'tcp port 80' | grep -i 'User-Agent: curl'</code></pre>
+
+
+<h2 id="7">7. 高级过滤技巧</h2>
+<h3 id="71">7.1 按包大小过滤</h3>
+<pre class="codehilite"><code class="language-bash"># 排查大包或小包攻击
+# opsnot.com - 抓取大于1000字节的包
+tcpdump -i eth0 -nn 'greater 1000'</code></pre>
+
+
+<pre class="codehilite"><code class="language-bash"># 排查大包或小包攻击
+# by opsnot - 抓取小于100字节的包
+tcpdump -i eth0 -nn 'less 100'</code></pre>
+
+
+<h3 id="72-ttl">7.2 抓取特定TTL的包</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com - ip[8] 表示IP头的第8个字节，即TTL字段。用来追踪包的跳数
+tcpdump -i eth0 -nn 'ip[8] = 64'</code></pre>
+
+
+<h3 id="73">7.3 抓取分片的包</h3>
+<pre class="codehilite"><code class="language-bash"># author: opsnot - MTU不匹配时会产生分片，影响性能
+tcpdump -i eth0 -nn 'ip[6:2] &amp; 0x1fff != 0 or ip[6] &amp; 0x20 != 0'</code></pre>
+
+
+<h3 id="74-tcp">7.4 抓取带特定TCP选项的包</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com - 抓取所有TCP头部长度大于20字节的包
+tcpdump -i eth0 -nn 'tcp[12] &amp; 0xf0 &gt; 0x50'</code></pre>
+
+
+<h3 id="75">7.5 抓取重传的包</h3>
+<pre class="codehilite"><code class="language-bash"># by opsnot - 通过序列号分析识别重传
+# 统计目的IP和端口的ACK包频率，频繁重复出现的组合可能存在重传。
+# 加班哥提醒：这只是简单的频率统计，真正的重传检测需要分析TCP序列号，建议用Wireshark的 `tcp.analysis.retransmission` 过滤器
+tcpdump -i eth0 -nn 'tcp[tcpflags] &amp; tcp-ack != 0' -tttt | \
+awk '{print $1, $2, $5}' | sort | uniq -c | sort -rn | head -20</code></pre>
+
+
+<h2 id="8">8. 性能调优和注意事项</h2>
+<h3 id="81-buffer">8.1 使用buffer避免丢包</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com - 设置4MB的buffer（4096 KB）
+# 高流量环境下，默认buffer可能导致丢包。`-B` 参数单位是KB
+tcpdump -i eth0 -nn -B 4096 -w /tmp/capture.pcap</code></pre>
+
+
+<h3 id="82">8.2 只抓包头，减少开销</h3>
+<pre class="codehilite"><code class="language-bash"># author: opsnot - 只抓前100字节
+# 如果只需要分析包头（源IP、目的IP、端口等），不需要抓全包
+tcpdump -i eth0 -nn -s 100 -w /tmp/headers.pcap</code></pre>
+
+
+<h3 id="83">8.3 快速模式</h3>
+<pre class="codehilite"><code class="language-bash"># 立即显示抓到的包，不等待buffer满。
+tcpdump -i eth0 -nn --immediate-mode</code></pre>
+
+
+<h3 id="84">8.4 多网卡同时抓包</h3>
+<pre class="codehilite"><code class="language-bash"># by opsnot - '-i any' 监听所有网卡，包括lo（本地回环）
+tcpdump -i any -nn port 80 -w /tmp/all_interfaces.pcap</code></pre>
+
+
+<h3 id="85">8.5 排除本机流量</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com
+tcpdump -i eth0 -nn 'not host 127.0.0.1 and not host ::1'</code></pre>
+
+
+<h3 id="86-dns">8.6 抓包时不要让DNS查询干扰</h3>
+<pre class="codehilite"><code class="language-bash"># author: opsnot - 排除DNS流量，避免污染数据
+tcpdump -i eth0 -nn 'port not 53' -w /tmp/no_dns.pcap</code></pre>
+
+
+<h2 id="9">9. 实战案例</h2>
+<h3 id="91">9.1 排查接口超时问题</h3>
+<pre class="codehilite"><code class="language-bash"># 后台运行，抓取与应用服务器10.0.1.50的8080端口通信
+tcpdump -i eth0 -nn -s 0 -w /tmp/timeout_$(date +%Y%m%d_%H%M%S).pcap \
+'host 10.0.1.50 and port 8080' &amp;
+
+#借助tshark
+# 1. 检查RST包数量（异常断开）
+tshark -r &quot;XXX.pcap&quot; -Y &quot;tcp.flags.reset == 1&quot; | wc -l
+
+# 2. 检查TCP重传（网络问题）
+tshark -r &quot;XXX.pcap&quot; -Y &quot;tcp.analysis.retransmission&quot; | wc -l
+
+# 3. 检查慢响应（应用处理慢）
+tshark -r &quot;XXX.pcap&quot; -Y &quot;tcp.time_delta &gt; 1&quot; -T fields -e tcp.time_delta
+
+# 4. 查看HTTP状态码分布
+tshark -r &quot;XXX.pcap&quot; -Y &quot;http&quot; -T fields -e http.response.code | sort | uniq -c</code></pre>
+
+
+<h3 id="92-syn-flood">9.2 排查SYN Flood攻击</h3>
+<pre class="codehilite"><code class="language-bash"># by opsnot - 统计每秒SYN包数量
+# 如果每秒SYN包超过正常值几倍，可能遭受SYN Flood攻击
+tcpdump -i eth0 -nn 'tcp[tcpflags] &amp; tcp-syn != 0' | \
+awk '{print strftime(&quot;%Y-%m-%d %H:%M:%S&quot;, systime()), $3}' | \
+awk '{count[$1&quot; &quot;$2]++} END {for (i in count) print i, count[i]}' | \
+sort -k3 -rn</code></pre>
+
+
+<h3 id="93-mysql">9.3 分析MySQL慢查询</h3>
+<pre class="codehilite"><code class="language-bash"># 抓取后用Wireshark分析，过滤 `mysql.query`，按响应时间排序，找出响应慢的SQL语句。也可以在tcpdump层面通过时间戳间隔初步判断慢查询
+tcpdump -i eth0 -nn -s 0 -w /tmp/mysql.pcap 'port 3306 and host 10.0.2.100'</code></pre>
+
+
+<h3 id="94-redisgetset">9.4 抓取Redis的GET/SET命令</h3>
+<pre class="codehilite"><code class="language-bash"># author: opsnot - 实时查看Redis操作
+tcpdump -i eth0 -nn -A -s 0 'port 6379' | grep -E 'GET|SET'</code></pre>
+
+
+<h3 id="95">9.5 排查网络丢包</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com - 在Wireshark里用 `tcp.analysis.retransmission` 和 `tcp.analysis.lost_segment` 过滤，查看重传和丢包情况
+tcpdump -i eth0 -nn -tttt -vvv 'host 192.168.1.100' -w /tmp/loss.pcap</code></pre>
+
+
+<h3 id="96-https">9.6 抓取HTTPS握手过程</h3>
+<p>虽然无法解密内容，但可以分析握手性能：</p>
+<pre class="codehilite"><code class="language-bash"># by opsnot - 在Wireshark里过滤 `ssl.handshake`，分析TLS握手耗时
+tcpdump -i eth0 -nn -s 0 'port 443' -w /tmp/tls_handshake.pcap</code></pre>
+
+
+<h3 id="97">9.7 监控网卡流量</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com自用
+# 简易的流量监控脚本，每抓100个包就统计一次累计流量大小。
+tcpdump -i eth0 -nn -tttt -l | \
+awk '{bytes+=$NF} NR%100==0 {print systime(), bytes/1024/1024 &quot;MB&quot;; bytes=0}'</code></pre>
+
+
+<h3 id="98">9.8 抓取特定时间段的流量</h3>
+<pre class="codehilite"><code class="language-bash"># author: opsnot - 抓取60秒后自动停止
+timeout 60 tcpdump -i eth0 -nn -w /tmp/1min.pcap</code></pre>
+
+
+<h3 id="99-tcp">9.9 只抓取TCP握手失败的包</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com - 抓完包分析哪些SYN包没有对应的SYN-ACK，说明连接建立失败
+tcpdump -i eth0 -nn 'tcp[tcpflags] &amp; tcp-syn != 0' -w /tmp/syn.pcap</code></pre>
+
+
+<h3 id="910">9.10 抓取异常端口扫描</h3>
+<pre class="codehilite"><code class="language-bash"># by opsnot - 统计发送SYN包最多的源IP（以及每个IP的SYN包数量），识别端口扫描行为
+tcpdump -i eth0 -nn 'tcp[tcpflags] &amp; tcp-syn != 0 and tcp[tcpflags] &amp; tcp-ack == 0' | \
+awk '{print $3}' | cut -d'.' -f1-4 | sort | uniq -c | sort -rn | head -10</code></pre>
+
+
+<h2 id="10">10. 与其他工具配合</h2>
+<h3 id="101-tsharkwireshark">10.1 配合tshark（Wireshark命令行版）</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com - tshark的过滤语法比tcpdump强大，可以直接过滤HTTP字段
+tshark -i eth0 -nn -Y 'http.request.method == &quot;POST&quot;' -T fields -e frame.time -e ip.src -e http.request.uri</code></pre>
+
+
+<h3 id="102-wireshark">10.2 配合Wireshark远程抓包</h3>
+<pre class="codehilite"><code class="language-bash"># author: opsnot - 服务器上执行，实时传输到本地Wireshark分析
+ssh user@server 'tcpdump -i eth0 -nn -s 0 -w - port 80' | wireshark -k -i -</code></pre>
+
+
+<h3 id="103-termsharkwireshark">10.3 配合termshark（终端版Wireshark）</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com 提醒： 需要先安装termshark
+# 在终端里也能用类似Wireshark的TUI（文本用户界面），支持过滤、上下键浏览等功能
+termshark -i eth0 -f 'port 80'</code></pre>
+
+
+<h3 id="104-iftop">10.4 配合iftop看流量</h3>
+<pre class="codehilite"><code class="language-bash"># by opsnot - 一边抓包一边看实时流量。
+tcpdump -i eth0 -nn 'port 80' &amp;
+iftop -i eth0 -f 'port 80'</code></pre>
+
+
+<h2 id="11_1">11. 安全和权限</h2>
+<h3 id="111">11.1 普通用户抓包</h3>
+<pre class="codehilite"><code class="language-bash"># tcpdump需要root权限或CAP_NET_RAW能力
+# opsnot.com - 设置后普通用户也能抓包
+sudo setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump</code></pre>
+
+
+<h3 id="112">11.2 脱敏处理</h3>
+<pre class="codehilite"><code class="language-bash"># 抓取生产环境流量时，可能包含敏感信息
+# author: opsnot - 只保存包头，不保存payload
+# 或者可以先抓取，后用 `tcprewrite` 工具改写IP地址等信息
+
+tcpdump -i eth0 -nn -s 96 -w /tmp/headers_only.pcap</code></pre>
+
+
+<h3 id="113-pcap">11.3 加密传输pcap文件</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com - 边抓边加密，防止pcap文件泄露
+tcpdump -i eth0 -nn -w - port 80 | gzip | openssl enc -aes-256-cbc -salt -out /tmp/capture.pcap.gz.enc</code></pre>
+
+
+<h2 id="12-tcpdump">12. 调试tcpdump本身</h2>
+<h3 id="121">12.1 查看编译后的过滤表达式</h3>
+<pre class="codehilite"><code class="language-bash"># by opsnot - 查看BPF字节码，用于验证过滤器是否按预期工作
+tcpdump -d 'host 192.168.1.1 and port 80'</code></pre>
+
+
+<h3 id="122">12.2 测试过滤表达式</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com - 对已有的pcap文件测试过滤条件
+tcpdump -r /tmp/capture.pcap -d 'tcp port 80'</code></pre>
+
+
+<h3 id="123-tcpdump">12.3 查看tcpdump版本和支持的链路类型</h3>
+<pre class="codehilite"><code class="language-bash"># -D 列出所有可用的网卡
+tcpdump --version
+tcpdump -D</code></pre>
+
+
+<h2 id="13_1">13. 常见坑和解决方案</h2>
+<h3 id="131">13.1 抓包文件太大打不开</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com - Wireshark打不开大于2GB的文件，用 `editcap` 切割，每10万个包切割成一个文件
+editcap -c 100000 huge.pcap split.pcap</code></pre>
+
+
+<h3 id="132-ssh">13.2 远程抓包时SSH断开</h3>
+<pre class="codehilite"><code class="language-bash"># 加班哥提醒：永远记得排除SSH端口，或者用screen/tmux
+tcpdump -i eth0 -nn 'port not 22' -w /tmp/safe.pcap</code></pre>
+
+
+<pre class="codehilite"><code class="language-bash"># opsnot.com
+screen -S tcpdump
+tcpdump -i eth0 -nn -w /tmp/capture.pcap
+# Ctrl+A+D 断开，ssh断了也继续运行</code></pre>
+
+
+<h3 id="133-cpu">13.3 抓包导致CPU飙高</h3>
+<pre class="codehilite"><code class="language-bash"># 高流量环境下，tcpdump会消耗大量CPU
+# author: opsnot - 降低优先级
+nice -n 19 tcpdump -i eth0 -nn -w /tmp/capture.pcap</code></pre>
+
+
+<p>或者用更精确的过滤器，减少抓包数量。
+<strong>采样抓包（利用IP校验和）</strong>：</p>
+<pre class="codehilite"><code class="language-bash"># opsnot.com - 利用IP校验和最后一位采样，约抓50%的包
+#原理：IP头校验和（ip[10:2]）的最后一位具有随机性，`ip[10] &amp; 1 = 1` 只保留校验和最后一位为1的包，约占50%。可以调整位掩码实现不同采样率：
+# 'ip[10] &amp; 1 = 1'：约50%
+# 'ip[10] &amp; 3 = 1'：约25%
+# 'ip[10] &amp; 7 = 1'：约12.5%
+
+tcpdump -i eth0 -nn 'ip[10] &amp; 1 = 1' -w /tmp/sample.pcap</code></pre>
+
+
+<h3 id="134">13.4 磁盘写满</h3>
+<pre class="codehilite"><code class="language-bash"># by opsnot - 设置磁盘空间上限，最多占用500MB
+tcpdump -i eth0 -nn -w /tmp/capture.pcap -C 50 -W 10</code></pre>
+
+
+<h3 id="135">13.5 时间戳不准</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot.com - 使用高精度时间戳，纳秒级时间戳（需要较新版本tcpdump）
+# 纳秒级精度，适合分析微秒级延迟。
+# 加班哥提醒：并非所有系统和tcpdump版本都支持纳秒精度。
+
+tcpdump -i eth0 -nn -tttt --time-stamp-precision=nano</code></pre>
+
+
+<h2 id="14_1">14. 最后</h2>
+<p><code>tcpdump</code>用途较广，我总结了几条<code>tcpdump</code>使用原则：</p>
+<ol>
+<li><strong>生产环境抓包前一定要评估影响</strong>，高流量场景可能导致性能问题</li>
+<li><strong>永远不要在生产环境直接用 <code>-A</code> 或 <code>-X</code> 查看内容</strong>，先保存到文件再离线分析</li>
+<li><strong>远程抓包必须排除SSH端口</strong>，或者用screen/tmux防止断开</li>
+<li><strong>用 <code>-C</code> 和 <code>-W</code> 限制文件大小</strong>，避免磁盘写满</li>
+<li><strong>抓包时尽量加精确的过滤条件</strong>，减少无关流量干扰</li>
+<li><strong>敏感数据要脱敏处理</strong>，别因为抓包泄露用户信息</li>
+<li><strong>复杂分析用Wireshark</strong>，tcpdump适合快速定位问题</li>
+<li><strong>善用BPF语法</strong>，有助于写出正确有效的网络捕捉过滤器</li>
+<li><strong>抓包是手段不是目的更不是炫技</strong>，关键是分析出问题根因</li>
+<li><strong>定期清理历史pcap文件</strong>，别让你的服务器变成垃圾场</li>
+</ol>
+<blockquote>
+<p>本文由 opsnot.com 整理，转载请注明出处，喜欢就关注一下吧！</p>
+</blockquote>
+
+        <div>
+          <ul style="display: inline-block;padding: 0;margin: 0 0 0.5em;color: #999;">
+            <li style="display: inline-block;margin: 0 1em 0 0;"><a href="/tech/tcpdump-guide-network-troubleshooting.html">📅 2025-11-01</a></li>
+          </ul>
+        </div>
+
+        <hr>
+
+        <div class="pagination">
+            <a href="https://blog.opsnot.com/tech/kubectl-describe-command-guide.html" class="pagination-item prev-page">
+                <span class="pagination-arrow">←</span>
+                <span class="pagination-text">上一篇：<br>Kubectl Describe，k8s故障排查利器！</span>
+            </a>
+            <a href="/archive.html" class="pagination-item next-page">
+                <span class="pagination-text">下一篇：<br>文章列表</span>
+                <span class="pagination-arrow">→</span>
+            </a>
+        </div>
+
+        
+
+        
+
+        <div class="nav-cell">
+            <p class="nav-list-title">能看到这里一定是真爱，订阅一下吧</p>
+            <img alt="" loading="lazy" src="/static/images/wx.sou1.png" />
+        </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="copy"> © ops-coffee</div>
+
+      <div class="link">
+        <a href="/comments.html" title="给我留言" target="_blank">留言</a>
+        <a href="/friends.html" title="友情链接" target="_blank">友链</a>
+      </div>
+    </div>
+  </footer>
+  
+  <script defer src="https://umami.opsnot.com/script.js" data-website-id="b1df419f-de4e-4b55-82fc-2aebae58afc7"></script>
+</body>
+</html>
