@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
   <id>https://blog.opsnot.com</id>
   <title>运维不加班</title>
-  <updated>2025-10-31T20:12:09.520583+08:00</updated>
+  <updated>2025-11-02T00:13:18.624905+08:00</updated>
   <author>
     <name>运维不加班</name>
   </author>
@@ -10,6 +10,14 @@
   <link href="https://blog.opsnot.com/atom.xml" rel="self"/>
   <generator>Custom CMS v1.0</generator>
   <subtitle>运维不加班 的个人博客，欢迎订阅。</subtitle>
+  <entry>
+    <id>https://blog.opsnot.com/tech/tcpdump-guide-network-troubleshooting.html</id>
+    <title>运维火眼金睛之  tcpdump抓包实操手册</title>
+    <updated>2025-11-02T00:13:18.624905+08:00</updated>
+    <link href="https://blog.opsnot.com/tech/tcpdump-guide-network-troubleshooting.html"/>
+    <summary>本文详细介绍了tcpdump的使用方法，包括基础抓包、高级过滤器、保存和读取数据包、性能调优等，帮助你快速定位和解决网络故障问题。</summary>
+    <published>2025-11-01T23:56:27.396406+08:00</published>
+  </entry>
   <entry>
     <id>https://blog.opsnot.com/tech/kubectl-describe-command-guide.html</id>
     <title>Kubectl Describe，k8s故障排查利器！</title>
