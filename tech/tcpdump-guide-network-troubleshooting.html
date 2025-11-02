@@ -372,7 +372,7 @@ tcpdump -i eth0 -nn 'port not 53' -w /tmp/no_dns.pcap</code></pre>
 tcpdump -i eth0 -nn -s 0 -w /tmp/timeout_$(date +%Y%m%d_%H%M%S).pcap \
 'host 10.0.1.50 and port 8080' &amp;
 
-#借助tshark
+# 借助tshark
 # 1. 检查RST包数量（异常断开）
 tshark -r &quot;XXX.pcap&quot; -Y &quot;tcp.flags.reset == 1&quot; | wc -l
 
@@ -525,7 +525,7 @@ nice -n 19 tcpdump -i eth0 -nn -w /tmp/capture.pcap</code></pre>
 <p>或者用更精确的过滤器，减少抓包数量。
 <strong>采样抓包（利用IP校验和）</strong>：</p>
 <pre class="codehilite"><code class="language-bash"># opsnot.com - 利用IP校验和最后一位采样，约抓50%的包
-#原理：IP头校验和（ip[10:2]）的最后一位具有随机性，`ip[10] &amp; 1 = 1` 只保留校验和最后一位为1的包，约占50%。可以调整位掩码实现不同采样率：
+# 原理：IP头校验和（ip[10:2]）的最后一位具有随机性，`ip[10] &amp; 1 = 1` 只保留校验和最后一位为1的包，约占50%。可以调整位掩码实现不同采样率：
 # 'ip[10] &amp; 1 = 1'：约50%
 # 'ip[10] &amp; 3 = 1'：约25%
 # 'ip[10] &amp; 7 = 1'：约12.5%
