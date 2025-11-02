@@ -547,7 +547,7 @@ tcpdump -i eth0 -nn -tttt --time-stamp-precision=nano</code></pre>
 
 
 <h2 id="14_1">14. 最后</h2>
-<p><code>tcpdump</code>用途较广，我总结了几条<code>tcpdump</code>使用原则：</p>
+<p><code>tcpdump</code>用途较广，加班哥总结了几条<code>tcpdump</code>使用原则：</p>
 <ol>
 <li><strong>生产环境抓包前一定要评估影响</strong>，高流量场景可能导致性能问题</li>
 <li><strong>永远不要在生产环境直接用 <code>-A</code> 或 <code>-X</code> 查看内容</strong>，先保存到文件再离线分析</li>
