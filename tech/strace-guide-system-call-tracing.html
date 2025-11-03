@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="applicable-device" content="pc,mobile">
+  <meta name="keywords" content="strace, 系统调用, Linux 调试, 性能分析, 网络问题排查, 文件操作追踪, 进程追踪, Docker 容器追踪, 错误排查, 程序行为分析" />
+  <meta name="description" content="Strace 是一个强大的 Linux 工具，可以追踪程序的系统调用，帮助快速定位问题，无需修改代码或重启服务。本文详细介绍了 strace 的基础用法、进阶技巧和实操案例。" />
+  <link rel="alternate" type="application/rss+xml" title="运维不加班" href="https://blog.opsnot.com/feed.xml" />
+  <link rel="stylesheet" href="https://blog.opsnot.com/static/posts/css/ops-coffee.min.css" type="text/css" />
+
+  <!-- Begin SEO tag -->
+  <title>Strace命令，Linux系统调用追踪神器！</title>
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:site_name" content="运维不加班" />
+  <meta property="og:url" content="https://blog.opsnot.comtech/strace-guide-system-call-tracing.html" />
+  <meta property="og:title" content="Strace命令，Linux系统调用追踪神器！" />
+  <meta property="og:description" content="Strace 是一个强大的 Linux 工具，可以追踪程序的系统调用，帮助快速定位问题，无需修改代码或重启服务。本文详细介绍了 strace 的基础用法、进阶技巧和实操案例。" />
+  <link rel="canonical" href="https://blog.opsnot.comtech/strace-guide-system-call-tracing.html" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Strace命令，Linux系统调用追踪神器！",
+    "description": "Strace 是一个强大的 Linux 工具，可以追踪程序的系统调用，帮助快速定位问题，无需修改代码或重启服务。本文详细介绍了 strace 的基础用法、进阶技巧和实操案例。",
+    "url": "https://blog.opsnot.comtech/strace-guide-system-call-tracing.html",
+    "author": {
+      "@type": "Person",
+      "name": "运维不加班"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "运维不加班",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://blog.opsnot.com/favicon.ico"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://blog.opsnot.comtech/strace-guide-system-call-tracing.html"
+    }
+  }
+  </script>
+  <!-- End SEO tag -->
+</head>
+
+<body>
+  <div class="header">
+    <div class="menu-button">&#9776; 
+        <span class="menu-title">运维咖啡吧</span>
+    </div> 
+
+    <div class="container">
+      <nav class="header-site">
+        <ul>
+          <li><a href="/">首页</a></li>
+            <li><a href="/tag/index.html" target="_self">标签</a></li>
+            <li><a href="/archive.html" target="_self">归档</a></li>
+          <li class="search"><a href="/search.html" target="_self" aria-label="搜索">🔍</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <header>
+    <div class="container">
+      <a href="/">
+        <div class="name">运维不加班</div>
+        <div class="slogan">唯有热爱，方能成就非凡，若无痴迷，岂能窥得天机</div>
+      </a>
+    </div>
+  </header>
+
+  <div id="content-wrap">
+    <div class="container">
+        <h1 id="art-title">Strace命令，Linux系统调用追踪神器！</h1>
+
+        <h2 id="1-strace">1. strace 是什么</h2>
+<p>简单说，<code>strace</code> 就像是程序和操作系统之间的“窃听器”。</p>
+<p>你的程序想读文件？调系统调用？想发网络请求？还是系统调用？<code>strace</code> 就蹲在中间，把这些对话全给记录下来。</p>
+<p>最关键的是：<strong>不用修改代码，不用重启程序，不用加日志，直接开查。</strong></p>
+<p>就排查问题来说，这玩意简直牛批完了！</p>
+<p>先看下面这个例子：</p>
+<pre class="codehilite"><code class="language-bash"># 追踪运行中的进程，看它在干什么
+# opsnot@opsnot.com
+$ strace -p 12345
+
+connect(3, {sa_family=AF_INET, sin_port=htons(6379), 
+        sin_addr=inet_addr(&quot;192.168.1.100&quot;)}, 16) = -1 ETIMEDOUT 
+        (Connection timed out) &lt;30.002345&gt;
+
+# 结果了然，程序连不上redis了
+# 只需要一行命令，这就是 strace 的魅力 —— 不需要看源码，不需要加日志，直接看程序跟操作系统的对话。</code></pre>
+
+
+<h2 id="2-3">2. 基础用法，3分钟上手</h2>
+<pre class="codehilite"><code class="language-bash"># 追踪一个命令的所有系统调用
+# 看看 ls 命令到底做了什么
+# opsnot@opsnot.com 省略不少返回结果..
+$ strace ls
+
+execve(&quot;/usr/bin/ls&quot;, [&quot;ls&quot;], 0x7ffc...) = 0
+brk(NULL)                               = 0x55555576d000
+openat(AT_FDCWD, &quot;/etc/ld.so.cache&quot;, O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, &quot;.&quot;, O_RDONLY|O_NONBLOCK|O_CLOEXEC) = 3
+getdents64(3, /* 10 entries */, 32768)  = 320
+write(1, &quot;file1.txt\nfile2.txt\n&quot;, 20)  = 20
+close(3)                                = 0
+exit_group(0)                           = ?
+
+看懂这几行，你就明白了：
+# execve - 加载 ls 程序
+# openat - 打开当前目录
+# getdents64 - 读取目录项
+# write - 输出到终端
+# close - 关闭文件
+# exit_group - 程序退出</code></pre>
+
+
+<h2 id="3">3. 实操一下</h2>
+<h3 id="31-api">3.1. 第三方API 调用失败</h3>
+<pre class="codehilite"><code class="language-bash"># -e trace=network 只看网络相关的调用
+# -s 1000 把字符串显示长度设为 1000（默认只有 32）
+# opsnot@opsnot.com，省略部分输出结果
+$ strace -e trace=network -s 1000 curl https://api.opsnot.com/v1/user
+
+socket(AF_INET, SOCK_STREAM, IPPROTO_TCP) = 3                       # 创建TCP socket成功
+setsockopt(3, SOL_TCP, TCP_NODELAY, [1], 4) = 0
+connect(3, {sa_family=AF_INET, sin_port=htons(443), 
+        sin_addr=inet_addr(&quot;1.2.3.4&quot;)}, 16) = 0                     # TCP 连接建立成功（connect 返回 0）
+sendto(3, &quot;GET /v1/user HTTP/1.1\r\nHost: api.opsnot.com\r\n
+       User-Agent: curl/7.68.0\r\nAccept: */*\r\n\r\n&quot;, 87, MSG_NOSIGNAL, NULL, 0) = 87  # 请求发送成功
+recvfrom(3, &quot;HTTP/1.1 401 Unauthorized\r\nContent-Type: application/json\r\n
+         Content-Length: 52\r\n\r\n{\&quot;error\&quot;:\&quot;invalid token\&quot;,\&quot;code\&quot;:401}&quot;, 16384, 0, NULL, NULL) = 145  # 收到服务器响应
+
+最终可以看到，请求发送成功了，并返回了401，大概率是token过期了</code></pre>
+
+
+<h3 id="32">3.2. 性能杀手是哪位</h3>
+<p>某数据处理脚本跑得贼慢，但CPU、内存占用都不高。</p>
+<pre class="codehilite"><code class="language-bash"># -c 统计模式：显示每个系统调用的次数和总耗时
+# 运行完程序后会输出统计表
+# opsnot@opsnot.com
+$ strace -c python process_data.py
+
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 99.87   45.234567      452345       100           fsync
+  0.06    0.028901          28      1000           write
+  0.03    0.012345          12      1000           read
+  0.02    0.009876           9      1100           openat
+  0.01    0.004567           4      1000           close
+  0.01    0.003210           3      1000           fstat
+------ ----------- ----------- --------- --------- ----------------
+100.00   45.293466                  5200           total
+
+# 可以看到：脚本 99.87% 的时间花在 fsync 上，只调用了 100 次，但每次耗时 450+ 毫秒，让开发检查代码，发现是每处理一条数据就 fsync 一次（强写）。
+# 找到问题就好解决了，把脚本刷盘逻辑改成批量处理，每 1000 或 5000 条数据刷一次磁盘，根据实际场景来定，比如磁盘性能。</code></pre>
+
+
+<h3 id="33-java">3.3. java服务启动慢得一批</h3>
+<pre class="codehilite"><code class="language-bash"># -tt 显示精确时间戳（微秒级）
+# -T 显示每个系统调用的耗时
+# opsnot@opsnot.com
+$ strace -tt -T java -jar app.jar
+
+10:30:15.123456 execve(&quot;/usr/bin/java&quot;, [&quot;java&quot;, &quot;-jar&quot;, &quot;app.jar&quot;], ...) = 0
+10:30:15.234567 openat(AT_FDCWD, &quot;/etc/hosts&quot;, O_RDONLY) = 3 &lt;0.000234&gt;
+10:30:15.234567 close(3) = 0 &lt;0.000012&gt;
+
+# JVM 初始化
+10:30:15.345678 socket(AF_INET, SOCK_STREAM, IPPROTO_TCP) = 5 &lt;0.000045&gt;
+10:30:15.345678 fcntl(5, F_SETFL, O_RDONLY|O_NONBLOCK) = 0 &lt;0.000023&gt;
+10:30:15.345678 connect(5, {sa_family=AF_INET, sin_port=htons(3306), 
+                 sin_addr=inet_addr(&quot;10.0.0.100&quot;)}, 16) = -1 EINPROGRESS 
+                 (Operation now in progress) &lt;0.000123&gt;
+
+# 非阻塞连接等待
+10:30:15.345789 poll([{fd=5, events=POLLOUT}], 1, 30000) = 0 (Timeout) &lt;30.000456&gt;
+
+# 检查连接结果
+10:30:45.346245 getsockopt(5, SOL_SOCKET, SO_ERROR, [ETIMEDOUT], [4]) = 0 &lt;0.000034&gt;
+10:30:45.346279 close(5) = 0 &lt;0.000015&gt;
+
+# 应用层重试（新建socket）
+10:30:45.346294 socket(AF_INET, SOCK_STREAM, IPPROTO_TCP) = 5 &lt;0.000041&gt;
+10:30:45.346335 connect(5, {sa_family=AF_INET, sin_port=htons(3306), 
+                 sin_addr=inet_addr(&quot;10.0.0.100&quot;)}, 16) = -1 ETIMEDOUT 
+                 (Connection timed out) &lt;30.001234&gt;
+10:30:45.347569 close(5) = 0 &lt;0.000013&gt;
+
+# 10:30:45.346245 getsockopt(5, SOL_SOCKET, SO_ERROR, [ETIMEDOUT], [4]) = 0 &lt;0.000034&gt; 这一行信息直击要害：
+# getsockopt(...): 获取socket选项
+# SO_ERROR: 查询socket错误状态
+# [ETIMEDOUT]: 确认连接超时错误
+# 这里是确认连接真正失败的关键步骤！
+
+后续，可以综合tcmdump继续排障
+
+# 比如，tcpdump验证网络行为
+tcpdump -i any host 10.0.0.100 and port 3306</code></pre>
+
+
+<p><strong><code>tcpdump</code> 详细用法，请看我之前的文章 <a href="https://blog.opsnot.com/tech/tcpdump-guide-network-troubleshooting.html" target="_blank">运维火眼金睛之 - tcpdump抓包实操手册</a></strong></p>
+<h2 id="4">4. 常用参数速查表</h2>
+<pre class="codehilite"><code class="language-bash"># 基础追踪
+# opsnot@opsnot.com
+$ strace ./program              # 追踪新启动的程序
+$ strace -p 1234                # 追踪运行中的进程（PID=1234）
+$ sudo strace -p 1234           # 追踪其他用户的进程需要 root
+
+# 过滤系统调用
+$ strace -e trace=file          # 只看文件操作（open, read, write, close...）
+$ strace -e trace=network       # 只看网络操作（socket, connect, send, recv...）
+$ strace -e trace=process       # 只看进程操作（fork, exec, wait...）
+$ strace -e trace=signal        # 只看信号操作（kill, signal...）
+$ strace -e trace=open,read     # 只看指定的系统调用
+
+# 时间和性能分析
+$ strace -tt                    # 显示时间戳（微秒精度）
+$ strace -T                     # 显示每个调用的耗时
+$ strace -r                     # 显示相对时间（每个调用距上个调用的时间）
+$ strace -c                     # 统计模式（汇总所有调用）
+
+# 输出控制
+$ strace -s 1000                # 字符串显示长度（默认 32）
+$ strace -o output.txt          # 输出到文件
+$ strace -f                     # 追踪子进程（follow forks）
+$ strace -ff -o trace           # 每个进程输出到单独文件（trace.PID）
+
+# 组合使用（最常用）
+$ strace -tt -T -e trace=file -s 200 ./app
+# 显示时间戳 + 耗时 + 只看文件操作 + 字符串长度 200</code></pre>
+
+
+<h2 id="5">5. 进阶技巧</h2>
+<h3 id="51">5.1. 追踪多进程程序</h3>
+<p>很多服务会 fork 出多个子进程（比如 Nginx、Gunicorn），用 <code>-f</code> 追踪所有进程：</p>
+<pre class="codehilite"><code class="language-bash"># -f 追踪所有子进程
+# -o 输出到文件（终端会很乱）
+# opsnot@opsnot.com
+$ strace -f -o trace.log nginx
+
+# 查看输出，每行前面会有 PID
+$ head trace.log
+
+1234  execve(&quot;/usr/sbin/nginx&quot;, [&quot;nginx&quot;], ...) = 0
+1234  socket(AF_INET, SOCK_STREAM, IPPROTO_TCP) = 3
+1234  bind(3, {sa_family=AF_INET, sin_port=htons(80), ...}, 16) = 0
+1234  listen(3, 511) = 0
+1235  clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|...) = 1235
+1235  accept4(3, {sa_family=AF_INET, ...}, [16], ...) = 4</code></pre>
+
+
+<p>如果子进程很多，可以让每个进程输出到单独文件：</p>
+<pre class="codehilite"><code class="language-bash"># -ff 每个进程一个文件
+# 会生成 trace.1234, trace.1235, trace.1236...
+# opsnot@opsnot.com
+$ strace -ff -o trace gunicorn app:app</code></pre>
+
+
+<h3 id="52-grep">5.2. 结合 grep 过滤输出</h3>
+<p><code>strace</code> 的输出通常很多，配合 grep 快速找到想要的信息：</p>
+<pre class="codehilite"><code class="language-bash"># 只看失败的系统调用（返回值为 -1）
+# opsnot@opsnot.com
+$ strace ./app 2&gt;&amp;1 | grep &quot;= -1&quot;
+
+# 只看慢的系统调用（耗时超过 1 秒）
+$ strace -T ./app 2&gt;&amp;1 | grep &quot;&lt;[1-9]\.&quot;
+
+# 看某个文件的所有操作
+$ strace -e trace=file ./app 2&gt;&amp;1 | grep &quot;config.json&quot;
+
+# 看所有的网络连接
+$ strace -e trace=network ./app 2&gt;&amp;1 | grep &quot;connect&quot;
+
+# 统计每个错误类型的出现次数
+$ strace ./app 2&gt;&amp;1 | grep &quot;= -1&quot; | awk '{print $NF}' | sort | uniq -c</code></pre>
+
+
+<h3 id="53">5.3. 性能影响与注意事项</h3>
+<p><code>strace</code> 会让程序变慢，因为每个系统调用都要拦截和记录。线上使用时：</p>
+<pre class="codehilite"><code class="language-bash"># ❌ 不好：追踪所有调用，程序会变得很慢
+# opsnot@opsnot.com
+$ strace -p 1234
+
+# ✅ 好：只追踪需要的调用，减少开销
+$ strace -e trace=network -p 1234
+
+# ✅ 好：短时间追踪，看几秒就停止
+$ timeout 5 strace -p 1234
+
+# ✅ 好：使用统计模式，开销更小
+$ strace -c -p 1234
+
+
+生产环境使用建议：
+# 追踪时间控制在几秒到几十秒
+# 用 -e 只追踪需要的系统调用
+# 避免追踪高频操作的进程（比如疯狂写日志的）
+# 优先使用 -c 统计模式</code></pre>
+
+
+<h3 id="54-docker">5.4. 追踪 Docker 容器内的进程</h3>
+<pre class="codehilite"><code class="language-bash"># 方法一：找到容器内进程在宿主机上的真实 PID
+# opsnot@opsnot.com
+$ docker top mycontainer
+
+UID     PID     PPID    CMD
+root    12345   12344   python opsnot.py
+
+$ sudo strace -p 12345
+
+# 方法二：进入容器的 PID namespace  
+$ docker inspect --format '{{.State.Pid}}' mycontainer 
+12344
+
+$ nsenter -t 12344 -p -m strace -p 1
+# 容器内的进程 1 在容器内的视角追踪</code></pre>
+
+
+<p><strong><code>docker inspect</code> 详细用法，请看我之前的文章 <a href="https://blog.opsnot.com/tech/docker-inspect-guide.html" target="_blank">Docker Inspect，值得族谱单开一页的命令</a></strong></p>
+<h3 id="55">5.5. 保存和分析追踪结果</h3>
+<pre class="codehilite"><code class="language-bash"># 保存完整的追踪记录
+# opsnot@opsnot.com
+$ strace -tt -T -f -s 500 -o trace.log ./app
+
+# 分析文件操作：哪些文件被访问了
+$ grep &quot;openat&quot; trace.log | awk '{print $3}' | sort | uniq
+
+# 分析耗时：找出最慢的 10 个系统调用
+$ grep &quot;&lt;&quot; trace.log | awk '{print $NF}' | sed 's/[&lt;&gt;]//g' | sort -rn | head -10
+
+# 统计系统调用次数
+$ awk '{print $2}' trace.log | cut -d'(' -f1 | sort | uniq -c | sort -rn
+
+# 分析错误：统计各类错误
+$ grep &quot;= -1&quot; trace.log | awk '{print $NF}' | sort | uniq -c</code></pre>
+
+
+<h2 id="6">6. 实战技巧</h2>
+<p><strong>程序启动慢？</strong></p>
+<pre class="codehilite"><code class="language-bash"># 看看卡在哪个系统调用上
+# opsnot@opsnot.com
+$ strace -tt -T -o startup.log ./app
+$ grep &quot;&lt;[0-9]\.&quot; startup.log | sort -t'&lt;' -k2 -rn | head -10</code></pre>
+
+
+<p><strong>文件找不到？</strong></p>
+<pre class="codehilite"><code class="language-bash"># 看程序到底在哪里找文件
+# opsnot@opsnot.com
+$ strace -e trace=openat ./app 2&gt;&amp;1 | grep &quot;ENOENT&quot;</code></pre>
+
+
+<p><strong>网络连接失败？</strong></p>
+<pre class="codehilite"><code class="language-bash"># 看 DNS 解析、TCP 连接、数据收发
+# opsnot@opsnot.com
+$ strace -e trace=network -s 500 ./app 2&gt;&amp;1 | grep -E &quot;connect|send|recv&quot;</code></pre>
+
+
+<p><strong>程序卡死？</strong></p>
+<pre class="codehilite"><code class="language-bash"># 看运行中的进程在等什么
+# opsnot@opsnot.com
+$ sudo strace -p $(pgrep myapp)</code></pre>
+
+
+<p><strong>性能问题？</strong></p>
+<pre class="codehilite"><code class="language-bash"># 统计哪个系统调用最耗时
+# opsnot@opsnot.com
+$ strace -c ./app</code></pre>
+
+
+<h2 id="7-strace">7. 什么时候该用 strace &amp; 有什么坑</h2>
+<p><strong>适合的场景：</strong><br>
+- 程序行为异常，不知道在干什么<br>
+- 启动慢、卡死、hang 住<br>
+- 配置文件找不到、读取失败<br>
+- 网络连接问题<br>
+- 磁盘 I/O 问题<br>
+- 快速定位问题，来不及加日志</p>
+<p><strong>要注意的坑：</strong></p>
+<h3 id="71-stderr">7.1. 输出在 stderr</h3>
+<pre class="codehilite"><code class="language-bash"># ❌ 错误：这样只能看到程序输出，看不到 strace
+# opsnot@opsnot.com
+$ strace ./app &gt; output.txt
+
+# ✅ 正确：重定向 stderr
+$ strace ./app 2&gt; trace.txt
+
+# ✅ 正确：或者用 -o 参数
+$ strace -o trace.txt ./app</code></pre>
+
+
+<h3 id="72">7.2. 追踪别人的进程需要权限</h3>
+<pre class="codehilite"><code class="language-bash"># ❌ 错误：权限不够
+# opsnot@opsnot.com
+$ strace -p 1234
+strace: attach: ptrace(PTRACE_SEIZE, 1234): Operation not permitted
+
+# ✅ 正确：使用 sudo
+$ sudo strace -p 1234</code></pre>
+
+
+<h3 id="73">7.3. 系统调用在不同架构上可能不一样，比如：</h3>
+<pre class="codehilite"><code class="language-bash"># x86_64 上的系统调用
+$ strace ./app
+openat(AT_FDCWD, &quot;file.txt&quot;, O_RDONLY) = 3
+
+# arm64 上可能是
+openat2(AT_FDCWD, &quot;file.txt&quot;, O_RDONLY) = 3</code></pre>
+
+
+<h3 id="74-f">7.4. 子进程追踪要加 -f</h3>
+<pre class="codehilite"><code class="language-bash"># 追踪所有子进程
+$ strace -f nginx</code></pre>
+
+
+<h3 id="75">7.5. 为什么输出这么乱？</h3>
+<p><code>strace</code> 的输出在 stderr（错误输出），和程序的正常输出混在一起了：</p>
+<pre class="codehilite"><code class="language-bash"># 方法一：只保存 strace 输出
+# opsnot@opsnot.com
+$ strace -o trace.log ./app
+
+# 方法二：分离程序输出和 strace 输出
+$ ./app &gt; app.log 2&gt; &gt;(strace -o trace.log -p $$)</code></pre>
+
+
+<h2 id="8">8. 最后</h2>
+<p><code>strace</code>是 Linux 系统排查问题的神器，很多诡异问题都能用它定位。</p>
+<p>下次遇到问题，别急着翻源码、加日志、重启服务，先<code>strace</code>一把。</p>
+<p>加班哥提醒，<code>strace</code>执行会有性能影响，但短时间使用通常可以接受。</p>
+<p><strong>建议</strong>：线上使用前先在测试环境验证影响。</p>
+<p>另外：<code>strace</code>在容器中使用也较为广泛，后续有机会将专门写一篇<code>strace</code>容器相关用法</p>
+<blockquote>
+<p>本文由 opsnot.com 整理，转载请注明出处，点击下方卡片关注</p>
+</blockquote>
+
+        <div>
+          <ul style="display: inline-block;padding: 0;margin: 0 0 0.5em;color: #999;">
+            <li style="display: inline-block;margin: 0 1em 0 0;"><a href="/tech/strace-guide-system-call-tracing.html">📅 2025-11-03</a></li>
+          </ul>
+        </div>
+
+        <hr>
+
+        <div class="pagination">
+            <a href="https://blog.opsnot.com/tech/tcpdump-guide-network-troubleshooting.html" class="pagination-item prev-page">
+                <span class="pagination-arrow">←</span>
+                <span class="pagination-text">上一篇：<br>运维火眼金睛之 - tcpdump抓包实操手册</span>
+            </a>
+            <a href="/archive.html" class="pagination-item next-page">
+                <span class="pagination-text">下一篇：<br>文章列表</span>
+                <span class="pagination-arrow">→</span>
+            </a>
+        </div>
+
+        
+
+        
+
+        <div class="nav-cell">
+            <p class="nav-list-title">能看到这里一定是真爱，订阅一下吧</p>
+            <img alt="" loading="lazy" src="/static/images/wx.sou1.png" />
+        </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="copy"> © ops-coffee</div>
+
+      <div class="link">
+        <a href="/comments.html" title="给我留言" target="_blank">留言</a>
+        <a href="/friends.html" title="友情链接" target="_blank">友链</a>
+      </div>
+    </div>
+  </footer>
+  
+  <script defer src="https://umami.opsnot.com/script.js" data-website-id="b1df419f-de4e-4b55-82fc-2aebae58afc7"></script>
+</body>
+</html>
