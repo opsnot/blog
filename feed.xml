@@ -8,7 +8,14 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>Custom CMS v1.0</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 02 Nov 2025 11:01:14 +0800</lastBuildDate>
+    <lastBuildDate>Mon, 03 Nov 2025 23:38:44 +0800</lastBuildDate>
+    <item>
+      <title>Strace命令，Linux系统调用追踪神器！</title>
+      <link>https://blog.opsnot.com/tech/strace-guide-system-call-tracing.html</link>
+      <description>Strace 是一个强大的 Linux 工具，可以追踪程序的系统调用，帮助快速定位问题，无需修改代码或重启服务。本文详细介绍了 strace 的基础用法、进阶技巧和实操案例。</description>
+      <guid isPermaLink="false">https://blog.opsnot.com/tech/strace-guide-system-call-tracing.html</guid>
+      <pubDate>Mon, 03 Nov 2025 23:31:40 +0800</pubDate>
+    </item>
     <item>
       <title>运维火眼金睛之 - tcpdump抓包实操手册</title>
       <link>https://blog.opsnot.com/tech/tcpdump-guide-network-troubleshooting.html</link>
