@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
   <id>https://blog.opsnot.com</id>
   <title>运维不加班</title>
-  <updated>2025-11-04T11:17:34.115054+08:00</updated>
+  <updated>2025-11-04T20:14:47.132848+08:00</updated>
   <author>
     <name>运维不加班</name>
   </author>
@@ -10,6 +10,14 @@
   <link href="https://blog.opsnot.com/atom.xml" rel="self"/>
   <generator>Custom CMS v1.0</generator>
   <subtitle>运维不加班 的个人博客，欢迎订阅。</subtitle>
+  <entry>
+    <id>https://blog.opsnot.com/tech/linux-json-jq-guide.html</id>
+    <title>LINUX JSON处理， jq 命令行工具实战指南！</title>
+    <updated>2025-11-04T20:14:47.132848+08:00</updated>
+    <link href="https://blog.opsnot.com/tech/linux-json-jq-guide.html"/>
+    <summary>本文详细介绍了 Linux 中强大的 JSON 处理工具 jq，涵盖基础操作、数组处理、实战场景及进阶技巧，助你在 K8S/Docker 运维中高效处理 JSON 数据。</summary>
+    <published>2025-11-04T20:12:08.421050+08:00</published>
+  </entry>
   <entry>
     <id>https://blog.opsnot.com/tech/strace-guide-system-call-tracing.html</id>
     <title>Strace命令，Linux系统调用追踪神器！</title>
