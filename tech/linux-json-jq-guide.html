@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="applicable-device" content="pc,mobile">
+  <meta name="keywords" content="jq, JSON 处理, Linux 运维, K8S, Docker, API 数据提取, 日志分析, Kubernetes, 命令行工具, 运维实战" />
+  <meta name="description" content="本文详细介绍了 Linux 中强大的 JSON 处理工具 jq，涵盖基础操作、数组处理、实战场景及进阶技巧，助你在 K8S/Docker 运维中高效处理 JSON 数据。" />
+  <link rel="alternate" type="application/rss+xml" title="运维不加班" href="https://blog.opsnot.com/feed.xml" />
+  <link rel="stylesheet" href="https://blog.opsnot.com/static/posts/css/ops-coffee.min.css" type="text/css" />
+
+  <!-- Begin SEO tag -->
+  <title>LINUX JSON处理， jq 命令行工具实战指南！</title>
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:site_name" content="运维不加班" />
+  <meta property="og:url" content="https://blog.opsnot.comtech/linux-json-jq-guide.html" />
+  <meta property="og:title" content="LINUX JSON处理， jq 命令行工具实战指南！" />
+  <meta property="og:description" content="本文详细介绍了 Linux 中强大的 JSON 处理工具 jq，涵盖基础操作、数组处理、实战场景及进阶技巧，助你在 K8S/Docker 运维中高效处理 JSON 数据。" />
+  <link rel="canonical" href="https://blog.opsnot.comtech/linux-json-jq-guide.html" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "LINUX JSON处理， jq 命令行工具实战指南！",
+    "description": "本文详细介绍了 Linux 中强大的 JSON 处理工具 jq，涵盖基础操作、数组处理、实战场景及进阶技巧，助你在 K8S/Docker 运维中高效处理 JSON 数据。",
+    "url": "https://blog.opsnot.comtech/linux-json-jq-guide.html",
+    "author": {
+      "@type": "Person",
+      "name": "运维不加班"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "运维不加班",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://blog.opsnot.com/favicon.ico"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://blog.opsnot.comtech/linux-json-jq-guide.html"
+    }
+  }
+  </script>
+  <!-- End SEO tag -->
+</head>
+
+<body>
+  <div class="header">
+    <div class="menu-button">&#9776; 
+        <span class="menu-title">运维咖啡吧</span>
+    </div> 
+
+    <div class="container">
+      <nav class="header-site">
+        <ul>
+          <li><a href="/">首页</a></li>
+            <li><a href="/tag/index.html" target="_self">标签</a></li>
+            <li><a href="/archive.html" target="_self">归档</a></li>
+          <li class="search"><a href="/search.html" target="_self" aria-label="搜索">🔍</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <header>
+    <div class="container">
+      <a href="/">
+        <div class="name">运维不加班</div>
+        <div class="slogan">唯有热爱，方能成就非凡，若无痴迷，岂能窥得天机</div>
+      </a>
+    </div>
+  </header>
+
+  <div id="content-wrap">
+    <div class="container">
+        <h1 id="art-title">LINUX JSON处理， jq 命令行工具实战指南！</h1>
+
+        <p><code>JSON</code> 处理是运维的常见操作，<code>API</code> 返回、配置文件、日志分析等都会涉及到它<br>
+尤其是 <code>K8S/Docker</code> 运维场景中，<code>JSON</code> 数据处理更是家常便饭，本文就介绍个 <code>Linux JSON</code> 数据处理神器 —— <code>jq</code><br>
+这个命令行工具, 在处理 <code>JSON</code> 时比 <code>grep</code>、<code>awk</code>强大太多，所谓专业对口就是如此！<br>
+话不多说，开整！</p>
+<h2 id="1">1. 基础操作</h2>
+<h3 id="11">1.1 格式化输出</h3>
+<pre class="codehilite"><code class="language-bash"># 最常用的功能,把压缩的 JSON 格式化成人能看的样子:
+# 美化 API 返回结果
+curl -s https://api.opsnot.com/users | jq '.'
+
+# 处理文件
+cat opsnot.json | jq '.'</code></pre>
+
+
+<h3 id="12">1.2 提取字段</h3>
+<pre class="codehilite"><code class="language-bash"># 提取单个字段
+echo '{&quot;name&quot;:&quot;opsnot&quot;,&quot;age&quot;:30}' | jq '.name'
+# 输出: &quot;opsnot&quot;
+
+# 提取嵌套字段
+echo '{&quot;user&quot;:{&quot;name&quot;:&quot;opsnot&quot;}}' | jq '.user.name'
+
+# 数组索引
+echo '[&quot;a&quot;,&quot;b&quot;,&quot;c&quot;]' | jq '.[1]'
+# 输出: &quot;b&quot;</code></pre>
+
+
+<h3 id="13">1.3 去掉引号</h3>
+<pre class="codehilite"><code class="language-bash"># 默认字符串带引号,加 `-r` 参数去掉:
+echo '{&quot;domain&quot;:&quot;opsnot.com&quot;}' | jq -r '.domain'
+# 输出: opsnot.com (没有引号)</code></pre>
+
+
+<h2 id="2">2. 数组处理</h2>
+<h3 id="21">2.1 遍历数组</h3>
+<pre class="codehilite"><code class="language-bash"># 用户列表,提取所有用户名
+echo '[{&quot;name&quot;:&quot;tom&quot;},{&quot;name&quot;:&quot;jerry&quot;}]' | jq '.[].name'
+
+# 配合 -r 直接用
+kubectl get pods -o json | jq -r '.items[].metadata.name'</code></pre>
+
+
+<h3 id="22">2.2 过滤筛选</h3>
+<pre class="codehilite"><code class="language-bash"># 筛选 status 为 active 的记录
+jq '.users[] | select(.status == &quot;active&quot;)' users.json
+
+# 筛选端口大于 8000 的服务 (来自 opsnot 监控系统)
+# 注意: 如果 port 是字符串需要先转成数字
+jq '.services[] | select((.port | tonumber) &gt; 8000)' config.json
+
+# 多条件
+jq '.[] | select(.age &gt; 25 and .city == &quot;beijing&quot;)' data.json</code></pre>
+
+
+<h3 id="23">2.3 数组切片</h3>
+<pre class="codehilite"><code class="language-bash"># 取前 3 个
+echo '[1,2,3,4,5]' | jq '.[:3]'
+
+# 取后 2 个
+echo '[1,2,3,4,5]' | jq '.[-2:]'</code></pre>
+
+
+<h2 id="3">3. 实战场景</h2>
+<h3 id="31-docker">3.1 分析 Docker 容器状态</h3>
+<pre class="codehilite"><code class="language-bash"># 找出所有运行中的容器名称 (去掉前导斜杠)
+docker ps -q | xargs docker inspect | jq -r '.[].Name | ltrimstr(&quot;/&quot;)'
+
+# 加班哥提醒：当容器过多时，防止命令行参数超长，可以用下面这种更安全稳妥的方式
+docker ps --format &quot;{{.ID}}&quot; | while read id; do
+    docker inspect &quot;$id&quot; | jq -r '.[].Name | ltrimstr(&quot;/&quot;)'
+done
+
+# 找出占用端口 80 的容器
+docker ps -q | xargs docker inspect | \
+  jq -r '.[] | select(.NetworkSettings.Ports.&quot;80/tcp&quot; != null) | 
+         .Name | ltrimstr(&quot;/&quot;)'</code></pre>
+
+
+<p>更多 <code>docker</code> 高频实操命令，请看另外两篇：<br> <a href="https://blog.opsnot.com/tech/docker-commands-cheat-sheet.html" target="_blank">Docker高频命令实操手册，值得收藏！</a><br>
+<a href="https://blog.opsnot.com/tech/docker-inspect-guide.html" target="_blank">Docker Inspect，值得族谱单开一页的命令</a></p>
+<h3 id="32-kubernetes">3.2 处理 Kubernetes 资源</h3>
+<pre class="codehilite"><code class="language-bash"># 列出所有 Pod 的名称和 IP
+kubectl get pods -o json | \
+  jq -r '.items[] | &quot;\(.metadata.name) \(.status.podIP)&quot;'
+
+# 找出非 Running 状态的 Pod
+kubectl get pods -o json | \
+  jq -r '.items[] | select(.status.phase != &quot;Running&quot;) | .metadata.name'
+
+# 统计各命名空间的 Pod 数量 (opsnot 集群巡检脚本)
+kubectl get pods --all-namespaces -o json | \
+  jq -r '.items | group_by(.metadata.namespace) | 
+         .[] | &quot;\(.[0].metadata.namespace): \(length)&quot;'</code></pre>
+
+
+<p>更多 <code>k8S</code> 高频实操命令，请看另外两篇：<br> <a href="https://blog.opsnot.com/tools/kubernetes-commands-for-daily-use.html" target="_blank">K8s高频命令实操手册，值得收藏！</a><br>
+<a href="https://blog.opsnot.com/tech/kubectl-describe-command-guide.html" target="_blank">Kubectl Describe，k8s故障排查利器！</a></p>
+<h3 id="33">3.3 日志分析</h3>
+<pre class="codehilite"><code class="language-bash"># 从 JSON 格式日志中提取错误信息
+cat app.log | jq -r 'select(.level==&quot;ERROR&quot;) | .message'
+
+# 统计接口响应时间超过 1 秒的请求
+cat access.log | jq -r 'select(.response_time &gt; 1000) | 
+  &quot;\(.timestamp) \(.path) \(.response_time)ms&quot;'
+
+# 按状态码分组统计 (opsnot.com 访问日志, 这里需要配置nginx日志格式为json格式)
+cat nginx.log | jq -s 'group_by(.status) | 
+  .[] | {status: .[0].status, count: length}'</code></pre>
+
+
+<h3 id="34-api">3.4 API 数据提取</h3>
+<pre class="codehilite"><code class="language-bash"># GitHub API - 列出仓库 Star 数
+curl -s https://api.github.com/users/opsnot/repos | \
+  jq -r '.[] | &quot;\(.name): \(.stargazers_count) stars&quot;'
+
+# 提取所有 SSH 克隆地址
+curl -s https://api.github.com/users/opsnot/repos | \
+  jq -r '.[].ssh_url'</code></pre>
+
+
+<h3 id="35-json">3.5 构造新 JSON</h3>
+<pre class="codehilite"><code class="language-bash"># 重组字段
+jq '{username: .name, email: .contact.email}' users.json
+
+# 批量生成配置文件
+cat servers.json | jq -r '.[] | 
+  &quot;Host \(.name)\n  HostName \(.ip)\n  User opsnot\n&quot;' &gt; ~/.ssh/config.d/auto</code></pre>
+
+
+<h2 id="4">4. 进阶技巧</h2>
+<h3 id="41">4.1 管道操作</h3>
+<pre class="codehilite"><code class="language-bash"># 先过滤再提取
+jq '.users[] | select(.age &gt; 30) | .name' data.json
+
+# 多级处理
+jq '.data.items[] | select(.price &lt; 100) | {name, price}' products.json</code></pre>
+
+
+<h3 id="42">4.2 数组操作</h3>
+<pre class="codehilite"><code class="language-bash"># map - 批量转换
+echo '[1,2,3]' | jq 'map(. * 2)'
+# 输出: [2,4,6]
+
+# 数组长度
+jq '.users | length' data.json
+
+# 去重
+jq '[.[] | .city] | unique' users.json
+
+# 排序
+jq 'sort_by(.price)' products.json</code></pre>
+
+
+<h3 id="43">4.3 条件判断</h3>
+<pre class="codehilite"><code class="language-bash"># if-then-else
+jq '.[] | if .age &gt;= 18 then &quot;adult&quot; else &quot;minor&quot; end' users.json
+
+# 空值处理 (opsnot 数据清洗脚本)
+jq '.email // &quot;no-email@opsnot.com&quot;' users.json</code></pre>
+
+
+<h3 id="44">4.4 字符串处理</h3>
+<pre class="codehilite"><code class="language-bash"># 拼接字符串
+jq '.name + &quot;@opsnot.com&quot;' users.json
+
+# 分割
+echo '{&quot;path&quot;:&quot;/var/log/app.log&quot;}' | jq -r '.path | split(&quot;/&quot;) | .[-1]'
+
+# 正则匹配
+jq 'select(.email | test(&quot;.*@opsnot\\.com$&quot;))' users.json</code></pre>
+
+
+<h2 id="5">5. 性能优化</h2>
+<h3 id="51">5.1 流式处理大文件</h3>
+<pre class="codehilite"><code class="language-bash"># 处理 GB 级别的日志,不要用 jq -s 读入内存
+cat huge.json | jq -c '.[] | select(.error != null)'</code></pre>
+
+
+<h3 id="52">5.2 减少管道次数</h3>
+<pre class="codehilite"><code class="language-bash"># 不好的写法
+cat data.json | jq '.[]' | jq 'select(.age &gt; 30)' | jq '.name'
+
+# 好的写法
+jq '.[] | select(.age &gt; 30) | .name' data.json</code></pre>
+
+
+<h2 id="6">6. 常见坑点</h2>
+<h3 id="61">6.1 引号问题</h3>
+<pre class="codehilite"><code class="language-bash"># 错误: 单引号里不能用变量
+user=&quot;opsnot&quot;
+jq &quot;.name == \&quot;$user\&quot;&quot; users.json  # 可以但不安全
+
+# 推荐: 用 --arg 避免注入风险
+jq --arg u &quot;$user&quot; '.name == $u' users.json
+
+# 传递多个变量
+jq --arg name &quot;$name&quot; --arg domain &quot;$domain&quot; 
+   '.user = $name | .email = $name + &quot;@&quot; + $domain' config.json
+
+# 传递数字变量
+jq --argjson port 8000 '.port == $port' config.json</code></pre>
+
+
+<h3 id="62">6.2 数组为空的处理</h3>
+<pre class="codehilite"><code class="language-bash"># 避免报错
+jq '.items[]? | .name' data.json  # 加 ? 号
+
+# 或提供默认值
+jq '.items // []' data.json</code></pre>
+
+
+<h3 id="63">6.3 数字和字符串</h3>
+<pre class="codehilite"><code class="language-bash"># 端口号是字符串时需要转换
+jq '.[] | select((.port | tonumber) &gt; 8000)' config.json
+
+# 字符串转数字
+echo '{&quot;count&quot;:&quot;42&quot;}' | jq '.count | tonumber'
+
+# 数字转字符串
+echo '{&quot;count&quot;:42}' | jq '.count | tostring'</code></pre>
+
+
+<h3 id="64">6.4 错误处理</h3>
+<pre class="codehilite"><code class="language-bash"># 验证 JSON 是否合法
+json='{&quot;data&quot;: &quot;test&quot;}'
+if echo &quot;$json&quot; | jq -e . &gt;/dev/null 2&gt;&amp;1; then
+    echo &quot;Valid JSON&quot;
+else
+    echo &quot;Invalid JSON from opsnot.com API&quot; &gt;&amp;2
+    exit 1
+fi
+
+# 处理可能不存在的字段
+jq '.user.email // &quot;no-reply@opsnot.com&quot;' data.json
+
+# 安全访问数组,避免空数组报错
+jq '.items[]?' data.json</code></pre>
+
+
+<h2 id="7">7. 高级特性</h2>
+<h3 id="71">7.1 自定义函数</h3>
+<pre class="codehilite"><code class="language-bash"># 定义函数复用逻辑
+echo '{&quot;users&quot;:[{&quot;email&quot;:&quot;alice&quot;},{&quot;email&quot;:&quot;bob&quot;}]}' | jq '
+  def add_domain: . + &quot;@opsnot.com&quot;;
+  .users[].email | add_domain
+'
+
+# 带参数的函数
+echo '{&quot;prices&quot;:[10,20,30]}' | jq '
+  def multiply($n): . * $n;
+  .prices[] | multiply(1.1)
+'</code></pre>
+
+
+<h3 id="72">7.2 递归处理</h3>
+<pre class="codehilite"><code class="language-bash"># 递归查找所有 name 字段
+jq '.. | .name? // empty' complex.json
+
+# 递归遍历树形结构
+jq 'recurse(.children[]?) | .id' tree.json</code></pre>
+
+
+<h3 id="73">7.3 复杂查询的可读性</h3>
+<pre class="codehilite"><code class="language-bash"># 用 heredoc 处理多行复杂查询
+jq -n --slurpfile config config.json '
+  $config[0] | 
+  .services[] | 
+  select(.enabled == true) |
+  select(.env == &quot;prod&quot;) |
+  &quot;\(.name):\(.port) # opsnot.com&quot;
+'
+
+# 或者使用输入重定向：
+jq '.services[] | select(.enabled == true) | select(.env == &quot;prod&quot;) | &quot;\(.name):\(.port)&quot;' config.json</code></pre>
+
+
+<h3 id="74">7.4 组合拳</h3>
+<p>运维实战中经常要组合使用:</p>
+<pre class="codehilite"><code class="language-bash"># 找出 CPU 使用率最高的 5 个容器 (opsnot 监控告警)
+docker stats --no-stream --format &quot;{{json .}}&quot; | \
+  jq -R 'fromjson? | select(.CPUPerc != null)' | \
+  jq -s 'sort_by(.CPUPerc | rtrimstr(&quot;%&quot;) | tonumber) | 
+         reverse | .[:5] | 
+         .[] | &quot;\(.Name): \(.CPUPerc)&quot;'
+
+# 从 ELB 日志中统计慢请求的 URL 分布
+cat elb.log | \
+  jq -r 'select(.response_time &gt; 1) | .request_url' | \
+  sort | uniq -c | sort -rn | head -20
+
+# 生成 Prometheus 批量监控配置
+cat servers.json | \
+  jq -r '.[] | 
+    &quot;  - job_name: \&quot;\(.name)\&quot;&quot;,
+    &quot;    static_configs:&quot;,
+    &quot;      - targets: [\&quot;\(.ip):9100\&quot;]&quot;, 
+    &quot;        labels:&quot;,
+    &quot;          env: \(.env)&quot;,
+    &quot;          # by opsnot.com&quot;'</code></pre>
+
+
+<h2 id="8">8. 调试技巧</h2>
+<pre class="codehilite"><code class="language-bash"># 调试复杂表达式,查看中间结果
+jq 'debug | .users[] | select(.age &gt; 30)' data.json
+
+# 逐步构建复杂查询
+jq '.' data.json           # 先看整体结构
+jq '.users' data.json      # 再看特定字段
+jq '.users[]' data.json    # 遍历数组
+jq '.users[].name' data.json  # 最终提取
+
+# 查看类型
+echo '{&quot;port&quot;:&quot;8080&quot;}' | jq '.port | type'  # 输出: &quot;string&quot;</code></pre>
+
+
+<h2 id="9">9. 性能和限制</h2>
+<h3 id="91">9.1 性能优化</h3>
+<pre class="codehilite"><code class="language-bash"># 使用 -c 压缩输出减少内存
+jq -c '.' large-file.json
+
+# 避免重复解析同一文件
+config=$(jq '.' config.json)
+echo &quot;$config&quot; | jq '.db.host'
+echo &quot;$config&quot; | jq '.app.port'
+
+# 流式处理避免内存爆炸
+cat opsnot.log | jq -c 'select(.error)' &gt; errors.log</code></pre>
+
+
+<h3 id="92-jq">9.2 <code>jq</code>的局限</h3>
+<pre class="codehilite"><code class="language-bash">处理超大文件 (GB 级) 时性能有限，需要分割文件
+不支持就地修改文件，需要重定向输出
+复杂逻辑不如编程语言灵活，比如用py</code></pre>
+
+
+<h3 id="93">9.3 其他</h3>
+<pre class="codehilite"><code class="language-bash"># Python 处理复杂逻辑
+python3 -m json.tool &lt; data.json
+
+# 处理 JSON Lines 格式
+cat data.jsonl | jq -c '.'
+
+# 稳健一点，如果某行不是合法 JSON，jq 会报错并跳过
+cat data.jsonl | jq -c '.' 2&gt;/dev/null
+# 这样只输出有效的 JSON 行</code></pre>
+
+
+<h2 id="_1">总结:</h2>
+<p><code>jq</code> 的核心是管道和过滤，从左到右思考数据流。日常多用自然顺手，复杂场景就拆成小步骤。记得用 <code>--arg</code> 传参数、<code>-e</code> 校验 <code>JSON</code>、处理好空值和类型转换。</p>
+<p><strong>最佳实践：</strong>
+- 先用 <code>jq -e .</code> 验证 <code>JSON</code> 合法性
+- 用 <code>--arg</code> 传递外部变量,避免注入
+- 大文件用 <code>-c</code> 流式处理
+- 处理数组时加 <code>?</code> 防止空数组报错
+- 字符串和数字比较记得<code>tonumber</code></p>
+<h2 id="jq"><code>jq</code> 参数速查表</h2>
+<pre class="codehilite"><code class="language-bash"># 常用参数
+-r, --raw-output          # 输出原始字符串,去掉引号
+-c, --compact-output      # 压缩输出,不格式化
+-e, --exit-status         # 根据输出设置退出码,用于校验
+-s, --slurp               # 读取整个输入流为一个数组
+-n, --null-input          # 不读取输入,从 null 开始
+-j, --join-output         # 输出不换行
+-S, --sort-keys           # 输出时对对象的键排序
+--stream                  # 流式解析大 JSON 文件
+--seq                     # 使用 RS 分隔符的输入模式
+
+# 传递参数 (opsnot.com 推荐)
+--arg name value          # 传递字符串变量: $name
+--argjson name json       # 传递 JSON 变量: $name  
+--slurpfile name file     # 读取文件为数组: $name
+
+# 输出控制
+-C, --color-output        # 彩色输出 (默认)
+-M, --monochrome-output   # 单色输出
+--tab                     # 用 tab 缩进代替空格
+--indent n                # 设置缩进空格数
+
+# 程序文件
+-f file, --from-file file # 从文件读取 jq 程序
+-L directory              # 添加模块搜索路径
+
+# 示例
+jq -r '.name' data.json                    # 输出原始字符串
+jq -c '.' data.json                        # 压缩成一行
+jq -e '.error' data.json &amp;&amp; echo &quot;有错误&quot;  # 校验字段存在
+cat file1.json file2.json | jq -s '.'      # 合并多个文件
+jq --arg env prod '.[$env]' config.json    # 使用变量访问属性</code></pre>
+
+
+<p>更多运维技术请点击左下方 <code>阅读原文</code></p>
+<blockquote>
+<p>本文由 opsnot.com 整理，转载请注明出处，点击下方卡片关注</p>
+</blockquote>
+
+        <div>
+          <ul style="display: inline-block;padding: 0;margin: 0 0 0.5em;color: #999;">
+            <li style="display: inline-block;margin: 0 1em 0 0;"><a href="/tech/linux-json-jq-guide.html">📅 2025-11-04</a></li>
+          </ul>
+        </div>
+
+        <hr>
+
+        <div class="pagination">
+            <a href="https://blog.opsnot.com/tech/strace-guide-system-call-tracing.html" class="pagination-item prev-page">
+                <span class="pagination-arrow">←</span>
+                <span class="pagination-text">上一篇：<br>Strace命令，Linux系统调用追踪神器！</span>
+            </a>
+            <a href="/archive.html" class="pagination-item next-page">
+                <span class="pagination-text">下一篇：<br>文章列表</span>
+                <span class="pagination-arrow">→</span>
+            </a>
+        </div>
+
+        
+
+        
+
+        <div class="nav-cell">
+            <p class="nav-list-title">能看到这里一定是真爱，订阅一下吧</p>
+            <img alt="" loading="lazy" src="/static/images/wx.sou1.png" />
+        </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="copy"> © ops-coffee</div>
+
+      <div class="link">
+        <a href="/comments.html" title="给我留言" target="_blank">留言</a>
+        <a href="/friends.html" title="友情链接" target="_blank">友链</a>
+      </div>
+    </div>
+  </footer>
+  
+  <script defer src="https://umami.opsnot.com/script.js" data-website-id="b1df419f-de4e-4b55-82fc-2aebae58afc7"></script>
+</body>
+</html>
