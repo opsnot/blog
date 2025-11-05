@@ -1,5 +1,12 @@
 [
   {
+    "url": "https://blog.opsnot.com/life/life-ups-and-downs.html",
+    "title": "真正厉害的人，都懂得装怂，熬过去了，你就成了",
+    "content": "人生如龙蛇之变，经历低谷时学会变通，低调行事，积蓄力量。鸿门宴上的刘邦与朱元璋的故事告诉我们，能屈能伸方能成就大事。",
+    "keywords": "人生起伏, 变通, 低谷, 成功, 刘邦, 朱元璋, 鸿门宴, 龙蛇之变, 韬光养晦, 坚韧不拔",
+    "date": "2025-11-05"
+  },
+  {
     "url": "https://blog.opsnot.com/tech/linux-json-jq-guide.html",
     "title": "LINUX JSON处理， jq 命令行工具实战指南！",
     "content": "本文详细介绍了 Linux 中强大的 JSON 处理工具 jq，涵盖基础操作、数组处理、实战场景及进阶技巧，助你在 K8S/Docker 运维中高效处理 JSON 数据。",

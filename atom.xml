@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
   <id>https://blog.opsnot.com</id>
   <title>运维不加班</title>
-  <updated>2025-11-04T20:14:47.132848+08:00</updated>
+  <updated>2025-11-05T23:09:05.626655+08:00</updated>
   <author>
     <name>运维不加班</name>
   </author>
@@ -10,6 +10,14 @@
   <link href="https://blog.opsnot.com/atom.xml" rel="self"/>
   <generator>Custom CMS v1.0</generator>
   <subtitle>运维不加班 的个人博客，欢迎订阅。</subtitle>
+  <entry>
+    <id>https://blog.opsnot.com/life/life-ups-and-downs.html</id>
+    <title>真正厉害的人，都懂得装怂，熬过去了，你就成了</title>
+    <updated>2025-11-05T23:09:05.626655+08:00</updated>
+    <link href="https://blog.opsnot.com/life/life-ups-and-downs.html"/>
+    <summary>人生如龙蛇之变，经历低谷时学会变通，低调行事，积蓄力量。鸿门宴上的刘邦与朱元璋的故事告诉我们，能屈能伸方能成就大事。</summary>
+    <published>2025-11-05T23:09:05.621058+08:00</published>
+  </entry>
   <entry>
     <id>https://blog.opsnot.com/tech/linux-json-jq-guide.html</id>
     <title>LINUX JSON处理， jq 命令行工具实战指南！</title>
