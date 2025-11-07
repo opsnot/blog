@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
   <id>https://blog.opsnot.com</id>
   <title>运维不加班</title>
-  <updated>2025-11-05T23:09:05.626655+08:00</updated>
+  <updated>2025-11-07T20:42:50.676628+08:00</updated>
   <author>
     <name>运维不加班</name>
   </author>
@@ -10,6 +10,14 @@
   <link href="https://blog.opsnot.com/atom.xml" rel="self"/>
   <generator>Custom CMS v1.0</generator>
   <subtitle>运维不加班 的个人博客，欢迎订阅。</subtitle>
+  <entry>
+    <id>https://blog.opsnot.com/tech/understanding-lsof-and-file-descriptors-in-linux.html</id>
+    <title>追踪打开文件的瑞士军刀 - lsof 运维实操手册</title>
+    <updated>2025-11-07T20:42:50.676628+08:00</updated>
+    <link href="https://blog.opsnot.com/tech/understanding-lsof-and-file-descriptors-in-linux.html"/>
+    <summary>本文深入探讨了Linux中的lsof命令及其与文件描述符的关系，帮助读者解决磁盘空间未释放、文件描述符泄露等问题，并提供了实用的排查技巧和脚本。</summary>
+    <published>2025-11-07T20:35:47.586706+08:00</published>
+  </entry>
   <entry>
     <id>https://blog.opsnot.com/life/life-ups-and-downs.html</id>
     <title>真正厉害的人，都懂得装怂，熬过去了，你就成了</title>

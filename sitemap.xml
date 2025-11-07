@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
  <loc>https://blog.opsnot.com</loc>
- <lastmod>2025-11-05</lastmod>
+ <lastmod>2025-11-07</lastmod>
 </url>
 <url>
  <loc>https://blog.opsnot.com/friends.html</loc>
@@ -19,6 +19,10 @@
 <url>
  <loc>https://blog.opsnot.com/life/index.html</loc>
  <lastmod>2025-10-25</lastmod>
+</url>
+<url>
+ <loc>https://blog.opsnot.com/tech/understanding-lsof-and-file-descriptors-in-linux.html</loc>
+ <lastmod>2025-11-07</lastmod>
 </url>
 <url>
  <loc>https://blog.opsnot.com/life/life-ups-and-downs.html</loc>

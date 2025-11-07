@@ -8,7 +8,14 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>Custom CMS v1.0</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Wed, 05 Nov 2025 23:09:05 +0800</lastBuildDate>
+    <lastBuildDate>Fri, 07 Nov 2025 20:42:50 +0800</lastBuildDate>
+    <item>
+      <title>追踪打开文件的瑞士军刀 - lsof 运维实操手册</title>
+      <link>https://blog.opsnot.com/tech/understanding-lsof-and-file-descriptors-in-linux.html</link>
+      <description>本文深入探讨了Linux中的lsof命令及其与文件描述符的关系，帮助读者解决磁盘空间未释放、文件描述符泄露等问题，并提供了实用的排查技巧和脚本。</description>
+      <guid isPermaLink="false">https://blog.opsnot.com/tech/understanding-lsof-and-file-descriptors-in-linux.html</guid>
+      <pubDate>Fri, 07 Nov 2025 20:35:47 +0800</pubDate>
+    </item>
     <item>
       <title>真正厉害的人，都懂得装怂，熬过去了，你就成了</title>
       <link>https://blog.opsnot.com/life/life-ups-and-downs.html</link>
