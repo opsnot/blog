@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="applicable-device" content="pc,mobile">
+  <meta name="keywords" content="lsof, 文件描述符, Linux, 磁盘空间未释放, 文件描述符泄露, 端口占用, CLOSE_WAIT, 网络连接监控, Linux排查问题, 操作系统运维" />
+  <meta name="description" content="本文深入探讨了Linux中的lsof命令及其与文件描述符的关系，帮助读者解决磁盘空间未释放、文件描述符泄露等问题，并提供了实用的排查技巧和脚本。" />
+  <link rel="alternate" type="application/rss+xml" title="运维不加班" href="https://blog.opsnot.com/feed.xml" />
+  <link rel="stylesheet" href="https://blog.opsnot.com/static/posts/css/ops-coffee.min.css" type="text/css" />
+
+  <!-- Begin SEO tag -->
+  <title>追踪打开文件的瑞士军刀 - lsof 运维实操手册</title>
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:site_name" content="运维不加班" />
+  <meta property="og:url" content="https://blog.opsnot.comtech/understanding-lsof-and-file-descriptors-in-linux.html" />
+  <meta property="og:title" content="追踪打开文件的瑞士军刀 - lsof 运维实操手册" />
+  <meta property="og:description" content="本文深入探讨了Linux中的lsof命令及其与文件描述符的关系，帮助读者解决磁盘空间未释放、文件描述符泄露等问题，并提供了实用的排查技巧和脚本。" />
+  <link rel="canonical" href="https://blog.opsnot.comtech/understanding-lsof-and-file-descriptors-in-linux.html" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "追踪打开文件的瑞士军刀 - lsof 运维实操手册",
+    "description": "本文深入探讨了Linux中的lsof命令及其与文件描述符的关系，帮助读者解决磁盘空间未释放、文件描述符泄露等问题，并提供了实用的排查技巧和脚本。",
+    "url": "https://blog.opsnot.comtech/understanding-lsof-and-file-descriptors-in-linux.html",
+    "author": {
+      "@type": "Person",
+      "name": "运维不加班"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "运维不加班",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://blog.opsnot.com/favicon.ico"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://blog.opsnot.comtech/understanding-lsof-and-file-descriptors-in-linux.html"
+    }
+  }
+  </script>
+  <!-- End SEO tag -->
+</head>
+
+<body>
+  <div class="header">
+    <div class="menu-button">&#9776; 
+        <span class="menu-title">运维不加班</span>
+    </div> 
+
+    <div class="container">
+      <nav class="header-site">
+        <ul>
+          <li><a href="/">首页</a></li>
+            <li><a href="/tag/index.html" target="_self">标签</a></li>
+            <li><a href="/archive.html" target="_self">归档</a></li>
+          <li class="search"><a href="/search.html" target="_self" aria-label="搜索">🔍</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <header>
+    <div class="container">
+      <a href="/">
+        <div class="name">运维不加班</div>
+        <div class="slogan">唯有热爱，方能成就非凡，若无痴迷，岂能窥得天机</div>
+      </a>
+    </div>
+  </header>
+
+  <div id="content-wrap">
+    <div class="container">
+        <h1 id="art-title">追踪打开文件的瑞士军刀 - lsof 运维实操手册</h1>
+
+        <h4 id="_1">你是否有过这些疑惑？</h4>
+<p>1、已经删了文件，但是df查看时，发现磁盘空间还被占着？<br>
+2、明明没跑几个应用，文件描述符使用率报警了？<br>
+3、吊炸天的重定向到底是什么原理？<br>
+4、被删掉的但是还没被释放的文件，有没有可能还能恢复？<br>
+5、都说<code>linux</code>的世界”一切皆文件“，那到底是什么意思？<br>
+6、清理了入侵系统的挖矿木马，不到10分钟，它换了个名字又跑起来了？<br>
+7、为什么一个查看打开文件的命令，居然可以用来排查各种各样的故障？</p>
+<h2 id="1-lsof-fd">1. lsof 是什么，FD又是什么？</h2>
+<p><code>lsof</code> = <code>list open files</code>，能列出系统中所有打开的文件。<br>
+<code>FD</code> = <code>File Descriptor</code>，文件描述符。<br>
+上面这些疑惑其实都跟linux的核心设计理念有关，即 ”一切皆文件“。<br>
+从用户视角来看，<code>linux</code>系统里发生的所有与I/O设备和通信资源相关的一切，都是在操作文件，<br>
+它把块设备、进程、网络连接、管道等等统统抽象为文件，然后提供统一的文件接口来操作他们。<br>
+所以 <code>lsof</code> 不仅能看普通文件，还能看网络连接、设备、管道等。<br>
+因此学会<code>lsof</code>在排查问题时，就又多了一件趁手的神兵利器！</p>
+<pre class="codehilite"><code class="language-bash"># opsnot.com - 常见的文件类型：
+REG    # 普通文件
+DIR    # 目录
+CHR    # 字符设备
+BLK    # 块设备
+FIFO   # 命名管道
+unix   # UNIX 域套接字
+IPv4   # IPv4 网络连接
+IPv6   # IPv6 网络连接
+PIPE   # 匿名管道   
+DEL    # 已删除文件  </code></pre>
+
+
+<p>如果把<code>linux</code>世界看作一个图书馆，那<code>lsof</code>就是档案查阅员，注意：它只有查阅权限，无管理权限。</p>
+<pre class="codehilite"><code class="language-bash"># by opsnot.com
+图书馆系统 (Linux 内核)
+    │
+    ├── 图书分类法 (VFS 虚拟文件系统) - 统一所有&quot;书籍&quot;的借阅规则
+    │
+    ├── 各种书籍类型：
+    │   ├── 普通图书 (REG 文件)
+    │   ├── 期刊杂志 (DIR 目录) 
+    │   ├── 电子设备 (CHR/BLK 设备文件)
+    │   ├── 电话线路 (IPv4/IPv6 网络连接)
+    │   ├── 内部传话 (PIPE/FIFO 管道)
+    │   └── 会议记录 (unix 套接字)
+    │
+    ├── 借书证 (FD 文件描述符) - 每个进程的&quot;借阅权限&quot;
+    │
+    └── 档案查阅员 (lsof) - 只能查看借阅记录，不能管理书籍</code></pre>
+
+
+<p>而<code>FD</code>就是借书证，它记录了每个程序的借阅权限，随时供<code>lsof</code>查阅</p>
+<pre class="codehilite"><code class="language-bash"># opsnot - 重要的 FD 类型：
+cwd    # 当前工作目录
+txt    # 程序代码（二进制文件或共享库）
+rtd    # 根目录
+mem    # 内存映射文件
+DEL    # 已删除但仍在使用的文件</code></pre>
+
+
+<p>附：<code>lsof</code>工作流程</p>
+<pre class="codehilite"><code class="language-bash">// 简化的 lsof 工作流程
+1. 遍历 /proc/&lt;pid&gt;/fd/ 目录
+2. 读取每个文件描述符的符号链接
+3. 通过 VFS 接口获取文件信息：
+   - 文件类型（TYPE）
+   - 设备号（DEVICE） 
+   - 文件大小（SIZE）
+   - inode 号（NODE）
+   - 文件路径（NAME）</code></pre>
+
+
+<h2 id="2-5">2. 最常用的 5 个场景</h2>
+<h3 id="21">2.1 明明删了文件，磁盘空间却没有释放</h3>
+<pre class="codehilite"><code class="language-bash"># 精准查找被删除但进程还占用的文件
+# +L1 表示查找链接数小于1的文件（即已删除）
+lsof +L1
+
+# 或者用传统方式（opsnot.com）
+lsof -nP | grep deleted
+
+**输出示例**：
+
+COMMAND   PID     USER   FD   TYPE DEVICE SIZE/OFF NLINK    NODE NAME
+nginx    12345  opsnot    7w   REG    8,1 2147483648    0  123456 /var/log/nginx/opsnot-access.log (deleted)
+
+原理：文件虽然 rm 了，但进程的文件描述符还开着，磁盘空间不会释放。</code></pre>
+
+
+<p>解决方案：</p>
+<pre class="codehilite"><code class="language-bash"># 方法1：重启（简单粗暴）
+systemctl restart nginx
+
+# 方法2：截断文件（加班哥推荐：不停服）
+# 先确认 PID 和 FD
+&gt; /proc/12345/fd/7</code></pre>
+
+
+<h3 id="22">2.2 端口被占用</h3>
+<pre class="codehilite"><code class="language-bash"># 查看 8080 端口被谁占用
+lsof -nP -i :8080
+
+# 输出
+COMMAND   PID     USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+java     8964  opsnot   42u  IPv6  98765      0t0  TCP *:8080 (LISTEN)
+
+# 查看端口范围
+lsof -nP -i :8000-9000
+
+# 加班哥提醒：比 netstat -nltp 更快，输出更直观。记得加 -nP 参数，否则会很慢。</code></pre>
+
+
+<h3 id="23">2.3 进程打开了哪些文件</h3>
+<pre class="codehilite"><code class="language-bash"># 查看 nginx 进程的所有文件
+lsof -c nginx
+
+# 或者用 PID
+lsof -p 1234
+
+# 只看网络连接（注意 -a 参数）
+lsof -c nginx -a -i</code></pre>
+
+
+<p><strong>加班哥重要提醒：</strong> <code>-a</code> 表示 <code>AND</code> 条件，不加就是 <code>OR</code></p>
+<pre class="codehilite"><code class="language-bash"># 错误写法：会输出 nginx 的所有文件 + 系统所有网络连接（这输出绝对不是你想要的）
+lsof -c nginx -i
+
+# 正确：只输出 nginx 的网络连接
+lsof -c nginx -a -i</code></pre>
+
+
+<h3 id="24">2.4 文件被哪个进程占用</h3>
+<pre class="codehilite"><code class="language-bash"># 查看某个文件被谁打开
+lsof /var/log/mysql/error.log
+
+# 卸载 U 盘时提示 device is busy
+lsof /mnt/usb
+
+# 只查一层目录（快）
+lsof +d /var/log
+
+# 递归查目录（慢，慎用！！！）
+lsof +D /var/log</code></pre>
+
+
+<h3 id="25">2.5 监控网络连接</h3>
+<pre class="codehilite"><code class="language-bash"># 查看所有 TCP 连接
+lsof -nP -i TCP
+
+# IPv4 TCP 连接
+lsof -nP -i4TCP
+
+# IPv6 UDP 连接
+lsof -nP -i6UDP
+
+# 查看特定 IP 的连接
+lsof -nP -i @192.168.1.100
+
+# 查看 ESTABLISHED 状态的连接
+lsof -nP -i TCP -s TCP:ESTABLISHED
+
+# 持续监控（opsnot 运维脚本）
+watch -n 1 'lsof -nP -i TCP -s TCP:ESTABLISHED | wc -l'</code></pre>
+
+
+<h2 id="3">3. 进阶用法</h2>
+<h3 id="31">3.1 组合条件查询</h3>
+<pre class="codehilite"><code class="language-bash"># 查看 opsnot 用户打开的网络连接
+lsof -u opsnot -a -i
+
+# 查看除了 root 外的所有用户
+lsof -u ^root
+
+# 查看端口 3306 且状态是 LISTEN
+lsof -nP -i :3306 -a -s TCP:LISTEN</code></pre>
+
+
+<p><strong>再次提醒：</strong> 多个条件必须加 <code>-a</code>，否则是 <code>OR</code> 关系</p>
+<h3 id="32">3.2 输出格式化</h3>
+<pre class="codehilite"><code class="language-bash"># 只显示 PID
+lsof -t -i :80
+
+# 批量 kill（慎用！）
+# 先用 SIGTERM，给进程清理资源的机会
+kill $(lsof -t -i :8080)
+
+# 等几秒后如果进程还在，再用 SIGKILL
+sleep 3
+kill -9 $(lsof -t -i :8080)
+
+# 自定义输出字段（适合脚本解析）
+lsof -F pcn -i :80</code></pre>
+
+
+<p><strong>加班哥提醒：</strong> <code>kill -9</code> 会强制杀死进程，不给它任何清理机会（关闭文件、断开连接等），可能导致数据丢失。生产环境慎用！</p>
+<h3 id="33">3.3 性能优化</h3>
+<pre class="codehilite"><code class="language-bash"># lsof 默认会做 DNS 反解析和端口转服务名，很慢
+# 生产环境必加这两个参数
+lsof -nP -i
+
+# -n：不做主机名解析（避免 DNS 查询）
+# -P：不做端口名解析（避免读 /etc/services）</code></pre>
+
+
+<h2 id="4">4. 实战脚本</h2>
+<h3 id="41">4.1 监控进程文件描述符泄露</h3>
+<pre class="codehilite"><code class="language-bash">#!/bin/bash
+# opsnot.com - 文件描述符监控脚本
+
+THRESHOLD=1000
+PID=$1
+
+if [ -z &quot;$PID&quot; ]; then
+    echo &quot;Usage: $0 &lt;pid&gt;&quot;
+    exit 1
+fi
+
+while true; do
+    FD_COUNT=$(lsof -p $PID 2&gt;/dev/null | wc -l)
+    echo &quot;[$(date '+%Y-%m-%d %H:%M:%S')] FD Count: $FD_COUNT&quot;
+
+    if [ $FD_COUNT -gt $THRESHOLD ]; then
+        echo &quot;WARNING: FD count exceeds $THRESHOLD&quot;
+        # 发送告警（接入你的告警系统）
+    fi
+
+    sleep 5
+done</code></pre>
+
+
+<h3 id="42">4.2 找出连接数最多的进程</h3>
+<pre class="codehilite"><code class="language-bash">#!/bin/bash
+# 统计每个进程的网络连接数 - opsnot
+
+lsof -nP -i TCP -s TCP:ESTABLISHED | \
+awk 'NR&gt;1 {print $1, $2}' | \
+sort | uniq -c | \
+sort -rn | head -10
+
+**输出**：
+
+    127 tomcat 8964
+     45 nginx  1234
+     23 redis  5678</code></pre>
+
+
+<h3 id="43-close_wait">4.3 诊断 <code>CLOSE_WAIT</code> 连接</h3>
+<pre class="codehilite"><code class="language-bash">#!/bin/bash
+# 诊断 CLOSE_WAIT 连接 - opsnot.com
+# 加班哥提醒：CLOSE_WAIT 通常是应用没有正确关闭 socket
+# 直接干掉进程可能导致数据丢失，这个脚本只做诊断
+
+echo &quot;=== CLOSE_WAIT 连接统计 ===&quot;
+lsof -nP -i TCP -s TCP:CLOSE_WAIT | \
+awk 'NR&gt;1 {count[$1]++} END {
+    for (cmd in count) 
+        print cmd, count[cmd]
+}' | sort -k2 -rn
+
+echo -e &quot;\n=== 详细列表（PID + 命令 + 远程地址）===&quot;
+lsof -nP -i TCP -s TCP:CLOSE_WAIT | \
+awk 'NR&gt;1 {print $2, $1, $9}' | sort -n
+
+echo -e &quot;\n建议：检查应用代码是否正确关闭了 socket&quot;</code></pre>
+
+
+<p><strong>为什么不直接 kill：</strong></p>
+<p>CLOSE_WAIT 是应用层问题，不是系统问题
+直接杀进程可能导致正在处理的请求丢失
+加班哥建议：应该先去排查代码，看是否有资源泄露</p>
+<h3 id="44">4.4 循环监控端口</h3>
+<pre class="codehilite"><code class="language-bash"># 每 2 秒监控一次 8080 端口
+lsof -nP -r 2 -i :8080
+
+# -r 参数：重复执行模式
+# Ctrl+C 停止</code></pre>
+
+
+<h2 id="5">5. 常见问题</h2>
+<h3 id="51-lsof">5.1 <code>lsof</code> 很慢怎么办</h3>
+<pre class="codehilite"><code class="language-bash"># 1. 加 -nP 参数（必须）
+lsof -nP -i
+
+# 2. 缩小查询范围
+lsof -c nginx -a -i  # 只查 nginx 的网络连接
+
+# 3. 避免全量扫描
+lsof +D /path  # 慢，会递归扫描所有子目录
+lsof +d /path  # 快，只扫描一层
+
+# 4. 用 -F 格式化后再处理（适合脚本）
+lsof -Fn -i :80 | grep '^p' | cut -c2-  # 只获取 PID
+
+# 5. 在负载高的系统上使用，-b 避免 lsof 自身阻塞
+lsof -b -nP -i</code></pre>
+
+
+<h3 id="52">5.2 权限问题</h3>
+<pre class="codehilite"><code class="language-bash"># sudo 普通用户只能看自己的进程，看不到其他用户的。生产环境排查问题时记得 `sudo`。
+sudo lsof -nP -i :80
+
+# 能看到所有进程</code></pre>
+
+
+<h3 id="53">5.3 输出太多</h3>
+<pre class="codehilite"><code class="language-bash"># 只看关键信息
+lsof -nP -i | awk '{print $1, $2, $8, $9}'
+
+# 或者用 grep
+lsof -nP -i | grep ESTABLISHED
+
+# 统计而不是列出
+lsof -nP -i TCP -s TCP:ESTABLISHED | wc -l</code></pre>
+
+
+<h2 id="6">6. 核心参数速查表</h2>
+<pre class="codehilite"><code class="language-bash"># 基础过滤
+-a      AND 条件（多个选项时必须）
+-c      按命令名过滤
+-p      按 PID 过滤
+-u      按用户过滤（^user 排除某用户）
+-i      网络连接
+
+# 性能优化
+-n      不做主机名解析
+-P      不做端口名解析
+-b      避免阻塞
+
+# 输出控制
+-t      只输出 PID
+-F      字段格式化输出（适合脚本）
+-R      显示父进程 PID
+
+# 文件过滤
++d      非递归目录（快）
++D      递归目录（慢）
++L1     查找已删除的文件
+
+# 网络过滤
+-i4     只看 IPv4
+-i6     只看 IPv6
+-i TCP  只看 TCP
+-i :80  只看 80 端口
+-s TCP:ESTABLISHED  按状态过滤
+
+# 循环执行
+-r N    每 N 秒重复执行</code></pre>
+
+
+<p>-F 专用格式化参数</p>
+<pre class="codehilite"><code class="language-bash"># 牛逼的 -F
+
+lsof -F?     # 命令行输入这个，可以返回-F的帮助信息
+
+a       访问权限，r = 只读；w = 只写；u = 读写
+c       打开文件的进程命令名
+d       设备标识符的字符形式
+D       以 0x&lt;十六进制&gt; 格式显示的主/次设备号
+f       打开文件的文件描述符编号
+G       以 0x&lt;十六进制&gt; 格式显示的文件标志
+i       文件在文件系统中的 inode 编号
+k       文件的硬链接计数
+K       任务标识符（TID）
+l       锁状态，r/R = 读锁；w/W = 写锁；u = 读写锁
+L       打开文件进程的登录用户名
+m       在重复输出之间的分隔标记
+M       任务的完整命令名称
+n       文件名、注释或网络地址信息
+o       以 0t&lt;十进制&gt; 或 0x&lt;十六进制&gt; 格式显示的文件偏移
+p       打开文件进程的进程标识符（PID）
+g       进程组标识符（PGID）
+P       网络连接使用的协议名
+r       以 0x&lt;十六进制&gt; 格式显示的原始设备号
+R       父进程标识符
+s       文件的大小（字节）
+S       流模块和关联的设备名称
+t       文件的类型（如普通文件、目录、套接字等）
+T       TCP或TPI相关网络连接信息
+u       打开文件进程的用户标识符（UID）
+0       字段终止符，使用NUL字符（\0）而非换行符（NL）作为字段分隔符</code></pre>
+
+
+<h2 id="7">7. 最后</h2>
+<p><code>lsof</code> 是排查问题的利器，但也要<strong>注意：</strong><br>
+- 生产环境务必加 <code>-nP</code>，否则很容易卡住，别坏人没找到，枪先卡壳了<br>
+- 多条件查询记得加 <code>-a</code>，否则是 <code>OR</code> 关系<br>
+- 不要频繁全量扫描，对系统有性能影响<br>
+- <code>CLOSE_WAIT</code> 不要无脑杀进程，先排查应用代码<br>
+- 慎用 <code>kill -9</code>，先用 <code>SIGTERM</code>，你要温柔，才会有魅力<br></p>
+<p>相信看到这里，开篇的问题已经能自行解决了，恭喜！<br>
+<strong>更多强大排障利器：</strong><br>
+<a href="https://blog.opsnot.com/tech/strace-guide-system-call-tracing.html" target="_blank">Strace命令，Linux系统调用追踪神器！</a><br>
+<a href="https://blog.opsnot.com/tech/tcpdump-guide-network-troubleshooting.html" target="_blank">运维火眼金睛之 - tcpdump抓包实操手册</a><br>
+<a href="https://blog.opsnot.com/tech/kubectl-describe-command-guide.html" target="_blank">Kubectl Describe，k8s故障排查利器！</a><br>
+<a href="https://blog.opsnot.com/tech/docker-inspect-guide.html" target="_blank">Docker Inspect，值得族谱单开一页的命令</a><br></p>
+<p><strong>更多运维技术</strong>请点击左下方 <code>阅读原文</code></p>
+<blockquote>
+<p>本文由 opsnot.com 整理，转载请注明出处，点击下方卡片关注</p>
+</blockquote>
+
+        <div>
+          <ul style="display: inline-block;padding: 0;margin: 0 0 0.5em;color: #999;">
+            <li style="display: inline-block;margin: 0 1em 0 0;"><a href="/tech/understanding-lsof-and-file-descriptors-in-linux.html">📅 2025-11-07</a></li>
+          </ul>
+        </div>
+
+        <hr>
+
+        <div class="pagination">
+            <a href="https://blog.opsnot.com/tech/linux-json-jq-guide.html" class="pagination-item prev-page">
+                <span class="pagination-arrow">←</span>
+                <span class="pagination-text">上一篇：<br>LINUX JSON处理， jq 命令行工具实战指南！</span>
+            </a>
+            <a href="/archive.html" class="pagination-item next-page">
+                <span class="pagination-text">下一篇：<br>文章列表</span>
+                <span class="pagination-arrow">→</span>
+            </a>
+        </div>
+
+        
+
+        
+
+        <div class="nav-cell">
+            <p class="nav-list-title">能看到这里一定是真爱，订阅一下吧</p>
+            <img alt="" loading="lazy" src="/static/images/wx.sou1.png" />
+        </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="copy"> © opsnot</div>
+
+      <div class="link">
+        <a href="/comments.html" title="给我留言" target="_blank">留言</a>
+        <a href="/friends.html" title="友情链接" target="_blank">友链</a>
+      </div>
+    </div>
+  </footer>
+  
+  <script defer src="https://umami.opsnot.com/script.js" data-website-id="b1df419f-de4e-4b55-82fc-2aebae58afc7"></script>
+</body>
+</html>
