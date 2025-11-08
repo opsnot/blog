@@ -1,5 +1,12 @@
 [
   {
+    "url": "https://blog.opsnot.com/life/timing-and-strategy-in-life-and-career.html",
+    "title": "君子，当藏器于身，待时而动！",
+    "content": "文章探讨了在人生和职场中，如何通过正确的时机和策略取得成功。强调了‘藏器于身，待时而动’的重要性，并通过姜子牙和张良的故事加以说明。",
+    "keywords": "时机, 策略, 人生规划, 职场智慧, 藏器于身, 待时而动, 姜子牙, 张良, 忍耐, 成功秘诀",
+    "date": "2025-11-08"
+  },
+  {
     "url": "https://blog.opsnot.com/tech/understanding-lsof-and-file-descriptors-in-linux.html",
     "title": "追踪打开文件的瑞士军刀 - lsof 运维实操手册",
     "content": "本文深入探讨了Linux中的lsof命令及其与文件描述符的关系，帮助读者解决磁盘空间未释放、文件描述符泄露等问题，并提供了实用的排查技巧和脚本。",
