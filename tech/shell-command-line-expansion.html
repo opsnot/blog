@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="applicable-device" content="pc,mobile">
+  <meta name="keywords" content="Shell命令行展开, 花括号展开, 波浪线展开, 参数展开, 命令替换, 路径名展开, 算术展开, 引用机制, 展开顺序, 实用高频技巧" />
+  <meta name="description" content="本文深度解析Shell中的命令行展开特性，揭秘花括号、波浪线、参数等展开方式，助你提升命令行效率，轻松成为运维大神。" />
+  <link rel="alternate" type="application/rss+xml" title="运维不加班" href="https://blog.opsnot.com/feed.xml" />
+  <link rel="stylesheet" href="https://blog.opsnot.com/static/posts/css/ops-coffee.min.css" type="text/css" />
+
+  <!-- Begin SEO tag -->
+  <title>运维拿手绝活之 - Shell命令行展开实战手册</title>
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:site_name" content="运维不加班" />
+  <meta property="og:url" content="https://blog.opsnot.comtech/shell-command-line-expansion.html" />
+  <meta property="og:title" content="运维拿手绝活之 - Shell命令行展开实战手册" />
+  <meta property="og:description" content="本文深度解析Shell中的命令行展开特性，揭秘花括号、波浪线、参数等展开方式，助你提升命令行效率，轻松成为运维大神。" />
+  <link rel="canonical" href="https://blog.opsnot.comtech/shell-command-line-expansion.html" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "运维拿手绝活之 - Shell命令行展开实战手册",
+    "description": "本文深度解析Shell中的命令行展开特性，揭秘花括号、波浪线、参数等展开方式，助你提升命令行效率，轻松成为运维大神。",
+    "url": "https://blog.opsnot.comtech/shell-command-line-expansion.html",
+    "author": {
+      "@type": "Person",
+      "name": "运维不加班"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "运维不加班",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://blog.opsnot.com/favicon.ico"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://blog.opsnot.comtech/shell-command-line-expansion.html"
+    }
+  }
+  </script>
+  <!-- End SEO tag -->
+</head>
+
+<body>
+  <div class="header">
+    <div class="menu-button">&#9776; 
+        <span class="menu-title">运维不加班</span>
+    </div> 
+
+    <div class="container">
+      <nav class="header-site">
+        <ul>
+          <li><a href="/">首页</a></li>
+            <li><a href="/tag/index.html" target="_self">标签</a></li>
+            <li><a href="/archive.html" target="_self">归档</a></li>
+          <li class="search"><a href="/search.html" target="_self" aria-label="搜索">🔍</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <header>
+    <div class="container">
+      <a href="/">
+        <div class="name">运维不加班</div>
+        <div class="slogan">唯有热爱，方能成就非凡，若无痴迷，岂能窥得天机</div>
+      </a>
+    </div>
+  </header>
+
+  <div id="content-wrap">
+    <div class="container">
+        <h1 id="art-title">运维拿手绝活之 - Shell命令行展开实战手册</h1>
+
+        <p><strong>Shell命令行展开，我愿称之为 “无敌！”</strong></p>
+<p>为什么 <code>rm *.log</code> 能删除所有日志，而 <code>rm "*.log"</code> 却提示文件不存在？<br>
+为什么<code>echo *</code> 和 <code>echo "*"</code> 结果完全不同?<br>
+为什么老司机写的脚本总是那么简洁高效？<br></p>
+<p><strong>神奇魔法，简洁而不简单</strong></p>
+<p>很多人把 <code>Shell</code> 当成一个简单的 “你输入，它执行” 的工具。但事实上，在你敲下回车后，<code>Shell</code> 会在执行命令前对输入进行一系列 “魔法处理”。这个过程就叫 命令行展开(Expansion)。</p>
+<p>搞懂它，可助你进阶为 “命令行大神”。今天 <a href="https://blog.opsnot.com/" target="_blank">opsnot.com</a> 就来揭秘这个 “神奇魔法”。</p>
+<h2 id="1">1. 什么是展开?</h2>
+<p><strong>展开就是 Shell 把你输入的简写，自动展开成全写。</strong></p>
+<pre class="codehilite"><code class="language-bash">echo a{1,2}b
+# 输出: a1b a2b</code></pre>
+
+
+<p>在 <code>echo</code> 执行前，Shell 已经把 <code>a{1,2}b</code> 展开为 <code>a1b a2b</code>。所以 <code>echo</code> 真正接收到的是两个参数:<code>a1b</code> 和 <code>a2b</code>，而不是原始的 <code>a{1,2}b</code>。</p>
+<p>这就是为什么很多命令看起来有 “魔法” 的原因 —— 它们其实只是接收了 Shell 展开后的结果。</p>
+<h2 id="2-brace-expansion">2. 花括号展开(Brace Expansion)</h2>
+<h3 id="21">2.1 批量创建目录</h3>
+<p><strong>场景：</strong> 创建 2024-2025 年每月的日志目录。</p>
+<pre class="codehilite"><code class="language-bash"># 低效做法：一个个mkdir或写循环
+# 高效做法：一行搞定 - opsnot
+mkdir -p logs/{2024,2025}/{01..12}
+
+# 自动生成：
+# logs/2024/01 logs/2024/02 ... logs/2025/12</code></pre>
+
+
+<p><strong>注意：</strong> 花括号展开是<strong>字符串层面的操作</strong>，不检查文件是否存在，只负责生成字符串组合。</p>
+<h3 id="22">2.2 快速备份配置文件</h3>
+<p><strong>场景:</strong> 修改 <code>nginx.conf</code> 前先备份。</p>
+<pre class="codehilite"><code class="language-bash"># 常规做法(手敲到酸)
+cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak
+
+# opsnot.com 推荐: {,string} 组合，逗号前为空
+cp /etc/nginx/nginx.conf{,.bak}
+
+# Shell展开为： cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak</code></pre>
+
+
+<p>这个技巧必须掌握，运维日常操作能省一半字符。</p>
+<h3 id="23">2.3 花括号嵌套</h3>
+<pre class="codehilite"><code class="language-bash"># 复杂的目录结构也能一行搞定 by 加班哥 - opsnot.com
+mkdir -p project/{src,test}/{js,css,img}
+
+# 嵌套使用 - opsnot
+echo a{A{1,2},B{3,4}}b
+# 输出: aA1b aA2b aB3b aB4b</code></pre>
+
+
+<h3 id="24">2.4 范围生成</h3>
+<pre class="codehilite"><code class="language-bash"># 数字范围
+echo {1..5}
+# 输出: 1 2 3 4 5
+
+# 字母范围(支持逆序)
+echo {z..a}
+# 输出: z y x w v u t s r q p o n m l k j i h g f e d c b a
+
+# 带步长(bash 4.0+)
+echo {0..20..2}
+# 输出: 0 2 4 6 8 10 12 14 16 18 20</code></pre>
+
+
+<p><strong>重要特性：</strong> 花括号展开至少需要2个元素才生效，否则会被当作普通字符串：</p>
+<pre class="codehilite"><code class="language-bash">echo {X}
+# 输出: {X} (不会展开)
+
+echo {X,Y}
+# 输出: X Y (正常展开)</code></pre>
+
+
+<h2 id="3-tilde-expansion">3. 波浪线展开(Tilde Expansion)</h2>
+<h3 id="31">3.1 回家目录</h3>
+<pre class="codehilite"><code class="language-bash">cd ~
+# 相当于: cd $HOME</code></pre>
+
+
+<h3 id="32">3.2 访问其他用户的家目录</h3>
+<p><strong>场景：</strong> 查看 opsnot 用户的 SSH 配置。</p>
+<pre class="codehilite"><code class="language-bash"># ~username 会展开为该用户的家目录
+cat ~opsnot/.ssh/authorized_keys
+
+# Shell展开为(假设opsnot家目录是/home/opsnot):
+# cat /home/opsnot/.ssh/authorized_keys</code></pre>
+
+
+<p>在多用户服务器环境下特别实用。</p>
+<h3 id="33">3.3 返回上次目录</h3>
+<pre class="codehilite"><code class="language-bash"># ~- 展开为上一个工作目录(OLDPWD变量)
+[root@opsnot /etc]$ cd /var/log
+[root@opsnot /var/log]$ cd ~-
+/etc
+[root@opsnot /etc]$ 
+
+# 也可以在其他命令中使用
+ls ~-  # 列出上次目录的文件</code></pre>
+
+
+<p><strong>加班哥重要提醒：</strong>
+这比 <code>cd -</code> 更灵活，因为 <code>~-</code> 可以在任何需要路径的地方使用。
+但是，<code>cd -</code> 有一个额外特性是它会在切换后打印出目标目录的路径，而 <code>cd ~-</code> 不会。</p>
+<pre class="codehilite"><code class="language-bash"># 使用 cd -
+[/tmp]$ cd /etc
+[/etc]$ cd -
+/tmp
+[/tmp]$ 
+
+# 使用 cd ~-
+[/tmp]$ cd /etc
+[/etc]$ cd ~-
+[/tmp]$</code></pre>
+
+
+<h3 id="34">3.4 当前目录</h3>
+<pre class="codehilite"><code class="language-bash"># ~+ 展开为当前工作目录(PWD变量)
+echo ~+
+# 等同于: pwd</code></pre>
+
+
+<h2 id="4-parameter-expansion">4. 参数展开(Parameter Expansion)</h2>
+<h3 id="41">4.1 区分变量边界</h3>
+<p><strong>场景：</strong> 在变量后拼接字符串。</p>
+<pre class="codehilite"><code class="language-bash"># 错误示例
+FILENAME=&quot;report_opsnot&quot;
+echo &quot;Saving as $FILENAME_backup.zip&quot;
+# 输出: Saving as .zip
+# 因为Shell尝试展开$FILENAME_backup这个不存在的变量
+
+# 正确做法：用大括号界定变量名
+echo &quot;Saving as ${FILENAME}_backup.zip&quot;
+# 输出: Saving as report_opsnot_backup.zip</code></pre>
+
+
+<h3 id="42">4.2 设置默认值</h3>
+<p><strong>场景：</strong> 脚本参数未传入时使用默认值。</p>
+<pre class="codehilite"><code class="language-bash"># ${VAR:-default} 如果VAR未设置或为空，使用default
+APP_ENV=${1:-production}
+echo &quot;Running in $APP_ENV&quot;
+
+# ./deploy.sh dev  -&gt; Running in dev
+# ./deploy.sh      -&gt; Running in production
+
+# 实际应用 - opsnot.com
+docker run -d -e &quot;APP_ENV=${ENV:-production}&quot; my_app</code></pre>
+
+
+<h3 id="43">4.3 字符串操作</h3>
+<pre class="codehilite"><code class="language-bash">filename=&quot;report_2024_opsnot.pdf&quot;
+
+# 删除前缀(最短匹配)
+echo ${filename#report_}
+# 输出：2024_opsnot.pdf
+
+# 删除前缀(最长匹配)
+echo ${filename##*_}
+# 输出：opsnot.pdf
+
+# 删除后缀(最短匹配)
+echo ${filename%.pdf}
+# 输出：report_2024_opsnot
+
+# 删除后缀(最长匹配)
+echo ${filename%%_*}
+# 输出：report
+
+# 实战：提取文件名和扩展名
+file=&quot;/var/log/nginx/access.log&quot;
+basename=&quot;${file##*/}&quot;    # access.log
+dirname=&quot;${file%/*}&quot;      # /var/log/nginx
+extension=&quot;${file##*.}&quot;   # log
+name=&quot;${basename%.*}&quot;     # access</code></pre>
+
+
+<h3 id="44">4.4 字符串替换</h3>
+<pre class="codehilite"><code class="language-bash">path=&quot;/home/opsnot/data/opsnot&quot;
+
+# 替换第一个匹配
+echo ${path/opsnot/admin}
+# 输出：/home/admin/data/opsnot
+
+# 替换所有匹配
+echo ${path//opsnot/admin}
+# 输出：/home/admin/data/admin</code></pre>
+
+
+<h3 id="45">4.5 获取字符串长度</h3>
+<pre class="codehilite"><code class="language-bash">var=&quot;opsnot.com&quot;
+echo ${#var}
+# 输出: 10
+
+# 实用场景：验证密码长度
+read -sp &quot;输入密码: &quot; password
+if [ ${#password} -lt 8 ]; then
+    echo &quot;密码至少需要8位&quot;
+fi</code></pre>
+
+
+<h2 id="5-command-substitution">5. 命令替换(Command Substitution)</h2>
+<p>命令替换允许你把一个命令的<strong>标准输出</strong>作为另一个命令的参数。</p>
+<h3 id="51-vs">5.1 现代写法 vs 过时写法</h3>
+<pre class="codehilite"><code class="language-bash"># 推荐: $() 语法清晰，可嵌套
+current_date=$(date +%Y-%m-%d)
+
+# 过时: 反引号 ` 难以阅读，不建议使用
+current_date=`date +%Y-%m-%d`
+
+# 嵌套示例(只有$()能这样干净地嵌套)
+backup_file=&quot;db_$(date +%Y%m%d)_$(hostname).sql&quot;</code></pre>
+
+
+<h3 id="52">5.2 高频实战场景</h3>
+<p><strong>5.2.1 动态文件名</strong></p>
+<pre class="codehilite"><code class="language-bash"># 创建带日期的备份
+BACKUP=&quot;backup_$(date +%Y%m%d_%H%M%S).tar.gz&quot;
+tar czf &quot;$BACKUP&quot; /data
+
+# 日志轮转 - opsnot
+mv app.log app.log.$(date +%Y%m%d)</code></pre>
+
+
+<p><strong>5.2.2 批量杀进程</strong></p>
+<pre class="codehilite"><code class="language-bash"># 低效做法：ps aux | grep java, 复制PID, 再kill
+# 高效做法：命令替换一步到位
+kill -9 $(pgrep -f &quot;java.*tomcat&quot;)
+
+# 更安全的写法(确认后再杀)
+ps aux | grep &quot;[t]omcat&quot;  # 查看要杀的进程
+# 确认无误后：
+kill $(pgrep -f &quot;tomcat&quot;)</code></pre>
+
+
+<p><strong>5.2.3 统计信息</strong></p>
+<pre class="codehilite"><code class="language-bash">echo &quot;当前目录有 $(ls | wc -l) 个文件&quot;
+echo &quot;日志文件数: $(ls /var/log/*.log 2&gt;/dev/null | wc -l)&quot;
+
+# 磁盘告警脚本 - opsnot.com
+usage=$(df -h / | awk 'NR==2 {print $5}' | sed 's/%//')
+if [ $usage -gt 80 ]; then
+    echo &quot;警告：磁盘使用率${usage}%&quot;
+fi</code></pre>
+
+
+<h2 id="6-pathname-expansionglobbing">6. 路径名展开(Pathname Expansion/Globbing)</h2>
+<p>这就是 <code>*</code> 的魔力所在——它不是命令的功能，而是 Shell 的功能!</p>
+<h3 id="61">6.1 基础通配符</h3>
+<pre class="codehilite"><code class="language-bash"># by opsnot.com - 运维不加班
+# * 匹配0个或多个任意字符
+ls *.log
+
+# ? 匹配恰好1个任意字符
+ls file_?.txt  # 匹配 file_1.txt, file_a.txt
+
+# [] 匹配括号中的任意一个字符
+ls file_[abc].txt  # 匹配 file_a.txt, file_b.txt, file_c.txt
+ls img_[0-9].jpg   # 匹配 img_0.jpg 到 img_9.jpg
+
+# [!] 或 [^] 匹配不在括号中的字符
+ls file_[!0-9].txt  # 匹配像 file_a.txt, file_X.txt，但不匹配 file_1.txt</code></pre>
+
+
+<h3 id="62">6.2 扩展通配符</h3>
+<pre class="codehilite"><code class="language-bash"># opsnot - 加班哥整理
+# 需要先启用扩展模式
+shopt -s extglob
+
+# ?(pattern) 匹配0次或1次
+ls file?(s).txt  # 匹配 file.txt 和 files.txt
+
+# *(pattern) 匹配0次或多次
+rm *.@(txt|log|bak)  # 删除所有txt、log、bak文件
+
+# +(pattern) 匹配1次或多次
+ls +(file|data)[0-9].txt
+
+# @(pattern) 精确匹配一次
+mv @(test|dev|prod).conf /backup/
+
+# !(pattern) 匹配除此之外的
+ls !(*.log)  # 列出所有非log文件</code></pre>
+
+
+<h3 id="63">6.3 隐藏文件的正确展开</h3>
+<pre class="codehilite"><code class="language-bash"># 错误做法
+echo .*
+# 会匹配到 . 和 .. (当前目录和父目录)
+
+# 正确做法
+ls -d .[!.]*     # 匹配以.开头，第二个字符不是.的文件
+ls -A            # 更简单，列出所有隐藏文件(不含.和..)
+
+# 或者用扩展通配符
+shopt -s dotglob  # 让*也能匹配隐藏文件
+echo *</code></pre>
+
+
+<h3 id="64">6.4 递归通配符</h3>
+<pre class="codehilite"><code class="language-bash"># bash 4.0+ 支持
+shopt -s globstar
+
+# ** 递归匹配所有子目录
+ls **/*.log              # 查找所有子目录的log文件
+grep -r &quot;opsnot&quot; **/*.conf  # 在所有conf文件中搜索
+du -sh **/node_modules   # 统计所有node_modules大小</code></pre>
+
+
+<h2 id="7-arithmetic-expansion">7. 算术展开(Arithmetic Expansion)</h2>
+<pre class="codehilite"><code class="language-bash"># 基本语法: $((expression))
+echo $((5 + 3))      # 8
+echo $((10 * 2))     # 20
+echo $((17 % 5))     # 2
+
+# 变量运算
+count=10
+echo $((count + 5))   # 15
+((count++))           # count自增1 
+# 加班哥划重点：
+# ((...)) 结构本身会进行算术运算并对变量赋值，无需 $ 和赋值符号，((count++))相当于 let &quot;count++&quot;
+
+# 实战: 循环计数器 - opsnot
+for ((i=1; i&lt;=5; i++)); do
+    echo &quot;第${i}次执行&quot;
+done
+
+# 批量重命名加序号
+num=1
+for file in *.jpg; do
+    mv &quot;$file&quot; &quot;$(printf 'img_%03d.jpg' $num)&quot;
+    ((num++))
+done</code></pre>
+
+
+<h2 id="8">8. 引用机制: 控制展开的开关</h2>
+<p>前面讲了这么多展开，现在该学习<strong>如何控制展开</strong>了。引用是选择性禁止展开的机制。</p>
+<h3 id="81">8.1 不加引号: 所有展开全部生效</h3>
+<pre class="codehilite"><code class="language-bash">echo text ~/*.txt {a,b} $(echo foo) $((2+2)) $USER
+# 输出: text /home/user/file.txt a b foo 4 opsnot
+# 所有展开都执行了</code></pre>
+
+
+<h3 id="82">8.2 双引号 "" (弱引用)</h3>
+<p><strong>双引号禁止以下展开:</strong>
+- 单词分割(word splitting)
+- 路径名展开(*)
+- 花括号展开({})
+- 波浪线展开(~)</p>
+<p><strong>双引号允许以下展开:</strong>
+- 参数展开($VAR)
+- 命令替换($())
+- 算术展开($((2+2)))</p>
+<pre class="codehilite"><code class="language-bash">echo &quot;text ~/*.txt {a,b} $(echo foo) $((2+2)) $USER&quot;
+# 输出: text ~/*.txt {a,b} foo 4 opsnot
+# 只有$()，$(())，$VAR执行了
+
+# 重点: 双引号保留空格和换行
+echo $(cal)
+# 输出: 五月 2025 日 一 二 三 四 五 六 1 2 3 4 5...
+# (所有输出挤在一行，因为没有引号时会进行单词分割)
+
+echo &quot;$(cal)&quot;
+# 输出: (保留原始格式的日历)
+#       五月 2025
+# 日 一 二 三 四 五 六
+#  1  2  3  4  5  6  7
+# ...</code></pre>
+
+
+<p><strong>关键区别：</strong> 没有引号的命令替换会让 Shell 进行单词分割，把输出的每个单词当作独立参数。加了双引号后，整个输出作为一个参数，保留了空格和换行。</p>
+<h3 id="83">8.3 单引号 '' (强引用)</h3>
+<p><strong>单引号禁止所有展开,字面量输出。</strong></p>
+<pre class="codehilite"><code class="language-bash">echo 'text ~/*.txt {a,b} $(echo foo) $((2+2)) $USER'
+# 输出: text ~/*.txt {a,b} $(echo foo) $((2+2)) $USER
+# 所有特殊字符都失效，原样输出</code></pre>
+
+
+<p>### 8.4 转义字符 \</p>
+<p><strong>反斜杠可以有选择地禁用单个字符的特殊含义。</strong></p>
+<pre class="codehilite"><code class="language-bash"># 场景: 输出美元符号
+echo &quot;The balance for user $USER is: \$5.00&quot;
+# 输出: The balance for user opsnot is: $5.00
+
+# 在文件名中使用空格
+touch my\ file.txt
+# 等同于: touch &quot;my file.txt&quot;
+
+# 多行命令(转义换行符)
+echo &quot;This is a \
+very long \
+line&quot; 
+# 输出: This is a very long line</code></pre>
+
+
+<h3 id="85">8.5 三种引用的对比总结</h3>
+<pre class="codehilite"><code class="language-bash"># 实战对比 - opsnot.com
+[root@server ~]$ echo text ~/*.txt {a,b} $(echo foo) $((2+2)) $USER
+text /root/test.txt a b foo 4 root
+
+[root@server ~]$ echo &quot;text ~/*.txt {a,b} $(echo foo) $((2+2)) $USER&quot;
+text ~/*.txt {a,b} foo 4 root
+
+[root@server ~]$ echo 'text ~/*.txt {a,b} $(echo foo) $((2+2)) $USER'
+text ~/*.txt {a,b} $(echo foo) $((2+2)) $USER</code></pre>
+
+
+<h2 id="9">9. 解开开篇的谜题</h2>
+<p>现在你应该明白了：</p>
+<h3 id="91-echo-echo">9.1 为什么 <code>echo *</code> 和 <code>echo "*"</code> 不同?</h3>
+<pre class="codehilite"><code class="language-bash"># echo *
+# 1. Shell看到*,触发路径名展开
+# 2. 替换为当前目录所有文件: file1.txt dir1 file2.log
+# 3. echo接收到3个参数并输出
+# 输出: file1.txt dir1 file2.log
+
+# echo &quot;*&quot;
+# 1. Shell看到双引号,禁止路径名展开
+# 2. echo接收到一个字面量参数: 字符串 &quot;*&quot;
+# 3. echo输出这个字符串
+# 输出: *</code></pre>
+
+
+<h3 id="92-rm-log-rm-log">9.2 为什么 <code>rm *.log</code> 有效但 <code>rm "*.log"</code> 无效?</h3>
+<pre class="codehilite"><code class="language-bash"># rm *.log
+# Shell展开为: rm access.log error.log app.log
+# rm删除这3个真实存在的文件 ✓
+
+# rm &quot;*.log&quot;
+# Shell不展开,rm尝试删除名为 &quot;*.log&quot; 的文件
+# 找不到这个文件 ✗
+# 输出: rm: cannot remove '*.log': No such file or directory</code></pre>
+
+
+<h2 id="10">10. 实战组合技巧</h2>
+<h3 id="101">10.1 批量重命名</h3>
+<pre class="codehilite"><code class="language-bash"># 修改扩展名
+for f in *.jpeg; do
+    mv &quot;$f&quot; &quot;${f%.jpeg}.jpg&quot;
+done
+
+# 批量添加前缀 - opsnot
+for f in *; do
+    mv &quot;$f&quot; &quot;backup_$f&quot;
+done
+# opsnot - 加班哥重要提醒：
+# 这个循环在处理以点开头的隐藏文件时，行为取决于 shopt -s dotglob 是否设置。默认情况下，* 不匹配隐藏文件。如果意图是备份所有文件（包括隐藏文件），可以使用 for f in * .[!.]*; do 或者先设置 dotglob。
+
+
+# 替换文件名中的字符串
+for f in *old*; do
+    mv &quot;$f&quot; &quot;${f//old/new}&quot;
+done</code></pre>
+
+
+<h3 id="102">10.2 智能备份脚本</h3>
+<pre class="codehilite"><code class="language-bash">#!/bin/bash
+# 带时间戳的增量备份 - opsnot.com
+
+backup_dir=~/backups/$(date +%Y%m%d_%H%M%S)
+source_dir=${1:-.}  # 默认当前目录
+max_backups=${MAX_BACKUPS:-7}
+
+mkdir -p &quot;$backup_dir&quot;
+
+# 压缩备份,排除不必要的文件
+tar czf &quot;${backup_dir}/backup.tar.gz&quot; \
+    --exclude='*.log' \
+    --exclude='node_modules' \
+    --exclude='.git' \
+    &quot;$source_dir&quot;
+
+# 只保留最近N个备份
+cd ~/backups
+ls -t | tail -n +$((max_backups + 1)) | xargs rm -rf
+
+echo &quot;✓ 备份完成: $backup_dir&quot;</code></pre>
+
+
+<h3 id="103">10.3 系统信息采集脚本</h3>
+<pre class="codehilite"><code class="language-bash">#!/bin/bash
+# 系统信息收集 - by opsnot.com
+
+REPORT_DIR=~/system_reports/$(date +%Y%m%d)
+HOSTNAME=$(hostname)
+
+echo &quot;=== 收集系统信息 ===&quot;
+
+# 花括号展开：创建报告目录结构
+mkdir -p ${REPORT_DIR}/{system,network,storage,processes}
+
+# 命令替换：收集各种系统信息
+echo &quot;收集时间: $(date)&quot; &gt; ${REPORT_DIR}/collection_time.txt
+echo &quot;主机名: $HOSTNAME&quot; &gt;&gt; ${REPORT_DIR}/collection_time.txt
+
+# 路径名展开 + 命令替换：备份重要配置
+cp /etc/{passwd,group,hosts,fstab} ${REPORT_DIR}/system/ 2&gt;/dev/null
+
+# 参数展开：生成系统概览
+{
+    echo &quot;=== 系统概览 ===&quot;
+    echo &quot;主机名: $HOSTNAME&quot;
+    echo &quot;用户: $USER&quot;
+    echo &quot;家目录: $HOME&quot;
+    echo &quot;Shell: $SHELL&quot;
+    echo &quot;语言: $LANG&quot;
+} &gt; ${REPORT_DIR}/system_overview.txt
+
+# 花括号展开：创建多个检查点文件
+touch ${REPORT_DIR}/checkpoint_{system,network,storage,done}
+
+# 命令替换 + 算术展开：生成报告统计
+total_files=$(find ${REPORT_DIR} -type f | wc -l)
+total_size=$(du -sh ${REPORT_DIR} | cut -f1)
+
+echo &quot;✅ 系统信息收集完成&quot;
+echo &quot;报告目录: ${REPORT_DIR}&quot;
+echo &quot;文件数量: ${total_files}&quot;
+echo &quot;总大小: ${total_size}&quot;</code></pre>
+
+
+<h2 id="11">11. 常见陷阱和注意事项</h2>
+<h3 id="111">11.1 花括号展开的局限</h3>
+<pre class="codehilite"><code class="language-bash"># 错误：花括号展开发生在变量替换之前
+start=1
+end=5
+echo {$start..$end}
+# 输出: {1..5} (没有展开!)
+
+# 正确做法: 用seq或eval
+echo $(seq $start $end)
+# 输出: 1 2 3 4 5</code></pre>
+
+
+<h3 id="112">11.2 文件名中的空格</h3>
+<pre class="codehilite"><code class="language-bash"># 错误处理
+for file in $(ls *.mp3); do
+    mv $file ${file// /_}  # 如果文件名有空格会出错
+done
+
+# 正确处理: 加引号
+for file in *.mp3; do
+    mv &quot;$file&quot; &quot;${file// /_}&quot;
+done</code></pre>
+
+
+<h3 id="113">11.3 隐藏危险的通配符</h3>
+<pre class="codehilite"><code class="language-bash"># 危险操作
+cd /tmp
+rm -rf *  # 如果当前目录不是/tmp就悲剧了
+
+# 更安全的做法
+cd /tmp &amp;&amp; rm -rf *
+# 或者
+rm -rf /tmp/*</code></pre>
+
+
+<h2 id="12">12. 最后总结</h2>
+<p>展开是 Shell 最强大的特性，记住这些要点:</p>
+<p><strong>1. 展开的顺序：</strong></p>
+<p>花括号展开 → 波浪线展开 → 参数展开 → 命令替换 → 算术展开 → 路径名展开</p>
+<p><strong>2. 引用控制：</strong><br>
+- 无引号: 所有展开生效<br>
+- 双引号: 禁用路径/花括号/波浪线,保留变量/命令替换<br>
+- 单引号: 禁用所有展开</p>
+<p><strong>3. 实用高频：</strong><br>
+- <code>cp file{,.bak}</code> 快速备份<br>
+- <code>mkdir -p {2024,2025}/{01..12}</code> 批量创建目录<br>
+- <code>kill $(pgrep xxx)</code> 批量杀进程<br>
+- <code>${var:-default}</code> 设置默认值<br>
+- <code>${file%.ext}</code> 操作文件名</p>
+<p>掌握了展开，你的命令行效率至少提升3倍。下次写 for 循环前，先想想能不能用展开给一行搞定。<br>
+更多linux强大工具技巧，请看往期文章：<br>
+<a href="https://blog.opsnot.com/tech/strace-guide-system-call-tracing.html" target="_blank">Strace命令，Linux系统调用追踪神器！</a><br>
+<a href="https://blog.opsnot.com/tech/linux-json-jq-guide.html" target="_blank">LINUX JSON处理， jq 命令行工具实战指南！</a><br>
+<a href="https://blog.opsnot.com/tech/understanding-lsof-and-file-descriptors-in-linux.html" target="_blank">追踪打开文件的瑞士军刀 - lsof 运维实操手册</a><br>
+<a href="https://blog.opsnot.com/tech/tcpdump-guide-network-troubleshooting.html" target="_blank">运维火眼金睛之 - tcpdump抓包实操手册</a></p>
+<blockquote>
+<p>本文由 opsnot.com 整理，转载请注明出处，喜欢就关注一下吧！</p>
+</blockquote>
+
+        <div>
+          <ul style="display: inline-block;padding: 0;margin: 0 0 0.5em;color: #999;">
+            <li style="display: inline-block;margin: 0 1em 0 0;"><a href="/tech/shell-command-line-expansion.html">📅 2025-11-12</a></li>
+          </ul>
+        </div>
+
+        <hr>
+
+        <div class="pagination">
+            <a href="https://blog.opsnot.com/tech/understanding-lsof-and-file-descriptors-in-linux.html" class="pagination-item prev-page">
+                <span class="pagination-arrow">←</span>
+                <span class="pagination-text">上一篇：<br>追踪打开文件的瑞士军刀 - lsof 运维实操手册</span>
+            </a>
+            <a href="/archive.html" class="pagination-item next-page">
+                <span class="pagination-text">下一篇：<br>文章列表</span>
+                <span class="pagination-arrow">→</span>
+            </a>
+        </div>
+
+        
+
+        
+
+        <div class="nav-cell">
+            <p class="nav-list-title">能看到这里一定是真爱，订阅一下吧</p>
+            <img alt="" loading="lazy" src="/static/images/wx.sou1.png" />
+        </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="copy"> © opsnot</div>
+
+      <div class="link">
+        <a href="/comments.html" title="给我留言" target="_blank">留言</a>
+        <a href="/friends.html" title="友情链接" target="_blank">友链</a>
+      </div>
+    </div>
+  </footer>
+  
+  <script defer src="https://umami.opsnot.com/script.js" data-website-id="b1df419f-de4e-4b55-82fc-2aebae58afc7"></script>
+</body>
+</html>
