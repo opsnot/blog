@@ -1,5 +1,12 @@
 [
   {
+    "url": "https://blog.opsnot.com/tech/shell-command-line-expansion.html",
+    "title": "运维拿手绝活之 - Shell命令行展开实战手册",
+    "content": "本文深度解析Shell中的命令行展开特性，揭秘花括号、波浪线、参数等展开方式，助你提升命令行效率，轻松成为运维大神。",
+    "keywords": "Shell命令行展开, 花括号展开, 波浪线展开, 参数展开, 命令替换, 路径名展开, 算术展开, 引用机制, 展开顺序, 实用高频技巧",
+    "date": "2025-11-12"
+  },
+  {
     "url": "https://blog.opsnot.com/life/timing-and-strategy-in-life-and-career.html",
     "title": "君子，当藏器于身，待时而动！",
     "content": "文章探讨了在人生和职场中，如何通过正确的时机和策略取得成功。强调了‘藏器于身，待时而动’的重要性，并通过姜子牙和张良的故事加以说明。",

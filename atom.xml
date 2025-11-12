@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
   <id>https://blog.opsnot.com</id>
   <title>运维不加班</title>
-  <updated>2025-11-08T20:38:00.580489+08:00</updated>
+  <updated>2025-11-12T22:25:35.326611+08:00</updated>
   <author>
     <name>运维不加班</name>
   </author>
@@ -10,6 +10,14 @@
   <link href="https://blog.opsnot.com/atom.xml" rel="self"/>
   <generator>Custom CMS v1.0</generator>
   <subtitle>运维不加班 的个人博客，欢迎订阅。</subtitle>
+  <entry>
+    <id>https://blog.opsnot.com/tech/shell-command-line-expansion.html</id>
+    <title>运维拿手绝活之 - Shell命令行展开实战手册</title>
+    <updated>2025-11-12T22:25:35.326611+08:00</updated>
+    <link href="https://blog.opsnot.com/tech/shell-command-line-expansion.html"/>
+    <summary>本文深度解析Shell中的命令行展开特性，揭秘花括号、波浪线、参数等展开方式，助你提升命令行效率，轻松成为运维大神。</summary>
+    <published>2025-11-12T21:23:01.058531+08:00</published>
+  </entry>
   <entry>
     <id>https://blog.opsnot.com/life/timing-and-strategy-in-life-and-career.html</id>
     <title>君子，当藏器于身，待时而动！</title>

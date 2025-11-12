@@ -8,7 +8,14 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>Custom CMS v1.0</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 08 Nov 2025 20:38:00 +0800</lastBuildDate>
+    <lastBuildDate>Wed, 12 Nov 2025 22:25:35 +0800</lastBuildDate>
+    <item>
+      <title>运维拿手绝活之 - Shell命令行展开实战手册</title>
+      <link>https://blog.opsnot.com/tech/shell-command-line-expansion.html</link>
+      <description>本文深度解析Shell中的命令行展开特性，揭秘花括号、波浪线、参数等展开方式，助你提升命令行效率，轻松成为运维大神。</description>
+      <guid isPermaLink="false">https://blog.opsnot.com/tech/shell-command-line-expansion.html</guid>
+      <pubDate>Wed, 12 Nov 2025 21:23:01 +0800</pubDate>
+    </item>
     <item>
       <title>君子，当藏器于身，待时而动！</title>
       <link>https://blog.opsnot.com/life/timing-and-strategy-in-life-and-career.html</link>
