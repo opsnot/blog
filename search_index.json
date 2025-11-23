@@ -1,5 +1,12 @@
 [
   {
+    "url": "https://blog.opsnot.com/tech/direct-k8s-api-operations.html",
+    "title": "绕过kubectl，直接操作K8s API的正确姿势！",
+    "content": "直接操作Kubernetes API可以显著提升性能和灵活性，减少中间层，支持并发和流式处理。在CI/CD、自定义控制器和监控等场景下，直接调用API是更优选择。",
+    "keywords": "K8s API, kubectl, 直接操作API, 性能优化, 灵活性, 并发请求, 零依赖, Watch机制, 批量操作, CI/CD流水线",
+    "date": "2025-11-23"
+  },
+  {
     "url": "https://blog.opsnot.com/tech/shell-command-line-expansion.html",
     "title": "运维拿手绝活之 - Shell命令行展开实战手册",
     "content": "本文深度解析Shell中的命令行展开特性，揭秘花括号、波浪线、参数等展开方式，助你提升命令行效率，轻松成为运维大神。",

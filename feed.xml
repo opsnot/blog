@@ -8,7 +8,14 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>Custom CMS v1.0</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Wed, 12 Nov 2025 22:25:35 +0800</lastBuildDate>
+    <lastBuildDate>Sun, 23 Nov 2025 15:28:46 +0800</lastBuildDate>
+    <item>
+      <title>绕过kubectl，直接操作K8s API的正确姿势！</title>
+      <link>https://blog.opsnot.com/tech/direct-k8s-api-operations.html</link>
+      <description>直接操作Kubernetes API可以显著提升性能和灵活性，减少中间层，支持并发和流式处理。在CI/CD、自定义控制器和监控等场景下，直接调用API是更优选择。</description>
+      <guid isPermaLink="false">https://blog.opsnot.com/tech/direct-k8s-api-operations.html</guid>
+      <pubDate>Sun, 23 Nov 2025 15:25:34 +0800</pubDate>
+    </item>
     <item>
       <title>运维拿手绝活之 - Shell命令行展开实战手册</title>
       <link>https://blog.opsnot.com/tech/shell-command-line-expansion.html</link>

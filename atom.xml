@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
   <id>https://blog.opsnot.com</id>
   <title>运维不加班</title>
-  <updated>2025-11-12T22:25:35.326611+08:00</updated>
+  <updated>2025-11-23T15:28:46.028428+08:00</updated>
   <author>
     <name>运维不加班</name>
   </author>
@@ -10,6 +10,14 @@
   <link href="https://blog.opsnot.com/atom.xml" rel="self"/>
   <generator>Custom CMS v1.0</generator>
   <subtitle>运维不加班 的个人博客，欢迎订阅。</subtitle>
+  <entry>
+    <id>https://blog.opsnot.com/tech/direct-k8s-api-operations.html</id>
+    <title>绕过kubectl，直接操作K8s API的正确姿势！</title>
+    <updated>2025-11-23T15:28:46.028428+08:00</updated>
+    <link href="https://blog.opsnot.com/tech/direct-k8s-api-operations.html"/>
+    <summary>直接操作Kubernetes API可以显著提升性能和灵活性，减少中间层，支持并发和流式处理。在CI/CD、自定义控制器和监控等场景下，直接调用API是更优选择。</summary>
+    <published>2025-11-23T15:25:34.527596+08:00</published>
+  </entry>
   <entry>
     <id>https://blog.opsnot.com/tech/shell-command-line-expansion.html</id>
     <title>运维拿手绝活之 - Shell命令行展开实战手册</title>
