@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="applicable-device" content="pc,mobile">
+  <meta name="keywords" content="Ansible概览, 自动化运维, Ansible优势, Ansible安装, SSH免密配置, Ansible目录结构, Ansible Playbook, Ansible Role, Ansible性能优化, Ansible安全加固, Ansible调试" />
+  <meta name="description" content="本文详细介绍了Ansible的三大优势、核心组件、安装配置、SSH免密配置、标准目录结构、Playbook语法、Role角色化管理及性能优化等，帮助你掌握Ansible自动化运维的最佳实践。" />
+  <link rel="alternate" type="application/rss+xml" title="运维不加班" href="https://blog.opsnot.com/feed.xml" />
+  <link rel="stylesheet" href="https://blog.opsnot.com/static/posts/css/ops-coffee.min.css" type="text/css" />
+
+  <!-- Begin SEO tag -->
+  <title>运维自动化利器之 - Ansible实战指南</title>
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:site_name" content="运维不加班" />
+  <meta property="og:url" content="https://blog.opsnot.comtech/ansible-overview-and-best-practices.html" />
+  <meta property="og:title" content="运维自动化利器之 - Ansible实战指南" />
+  <meta property="og:description" content="本文详细介绍了Ansible的三大优势、核心组件、安装配置、SSH免密配置、标准目录结构、Playbook语法、Role角色化管理及性能优化等，帮助你掌握Ansible自动化运维的最佳实践。" />
+  <link rel="canonical" href="https://blog.opsnot.comtech/ansible-overview-and-best-practices.html" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "运维自动化利器之 - Ansible实战指南",
+    "description": "本文详细介绍了Ansible的三大优势、核心组件、安装配置、SSH免密配置、标准目录结构、Playbook语法、Role角色化管理及性能优化等，帮助你掌握Ansible自动化运维的最佳实践。",
+    "url": "https://blog.opsnot.comtech/ansible-overview-and-best-practices.html",
+    "author": {
+      "@type": "Person",
+      "name": "运维不加班"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "运维不加班",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://blog.opsnot.com/favicon.ico"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://blog.opsnot.comtech/ansible-overview-and-best-practices.html"
+    }
+  }
+  </script>
+  <!-- End SEO tag -->
+</head>
+
+<body>
+  <div class="header">
+    <div class="menu-button">&#9776; 
+        <span class="menu-title">运维不加班</span>
+    </div> 
+
+    <div class="container">
+      <nav class="header-site">
+        <ul>
+          <li><a href="/">首页</a></li>
+            <li><a href="/tag/index.html" target="_self">标签</a></li>
+            <li><a href="/archive.html" target="_self">归档</a></li>
+          <li class="search"><a href="/search.html" target="_self" aria-label="搜索">🔍</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <header>
+    <div class="container">
+      <a href="/">
+        <div class="name">运维不加班</div>
+        <div class="slogan">唯有热爱，方能成就非凡，若无痴迷，岂能窥得天机</div>
+      </a>
+    </div>
+  </header>
+
+  <div id="content-wrap">
+    <div class="container">
+        <h1 id="art-title">运维自动化利器之 - Ansible实战指南</h1>
+
+        <h2 id="1-ansible">1. Ansible概览</h2>
+<h3 id="11">1.1 三大优势</h3>
+<p><strong>无Agent架构</strong>：只依赖SSH和Python，不需要在目标机器上安装客户端。管理上千台服务器时，这个优势非常明显。</p>
+<p><strong>幂等性保障</strong>：重复执行同一个playbook，结果始终一致。生产环境回滚、重新部署时非常关键。</p>
+<p><strong>YAML可读性</strong>：声明式语法让运维文档和代码合二为一，比Shell脚本清晰太多。</p>
+<h3 id="12">1.2 核心组件</h3>
+<ul>
+<li><strong>Inventory</strong>：定义管理哪些机器</li>
+<li><strong>Playbook</strong>：描述自动化任务  </li>
+<li><strong>Module</strong>：执行具体操作</li>
+<li><strong>Role</strong>：组织和复用代码</li>
+</ul>
+<h2 id="2">2. 环境准备与目录结构</h2>
+<h3 id="21">2.1 安装配置</h3>
+<pre class="codehilite"><code class="language-bash"># CentOS/RHEL (需启用EPEL源)
+yum install epel-release -y
+yum install -y ansible
+
+# Ubuntu/Debian (需启用Universe源)
+apt update &amp;&amp; apt install -y ansible
+
+# 或使用pip安装最新版 - opsnot
+pip3 install ansible
+
+# 验证安装
+ansible --version</code></pre>
+
+
+<h3 id="22-ssh">2.2 SSH免密配置</h3>
+<pre class="codehilite"><code class="language-bash"># 生成密钥对
+ssh-keygen -t rsa -b 4096 -C &quot;admin@opsnot.com&quot;
+
+# 批量分发公钥（建议使用普通用户，配合become）
+for ip in 192.168.1.{10..20}; do
+    ssh-copy-id deploy@$ip  # 使用deploy用户而非root
+done
+
+# 注意：生产环境应使用普通用户 + sudo权限，避免直接使用root</code></pre>
+
+
+<h3 id="23">2.3 标准目录结构</h3>
+<pre class="codehilite"><code class="language-bash">production/
+├── ansible.cfg              # 全局配置
+├── inventory/
+│   ├── prod                 # 生产环境
+│   └── test                 # 测试环境
+├── group_vars/              # 组变量
+│   ├── all.yml
+│   └── webservers.yml
+├── host_vars/               # 主机变量
+│   └── web01.yml
+├── roles/                   # 角色目录
+│   ├── nginx/
+│   ├── app/
+│   └── common/
+├── playbooks/               # 剧本
+│   ├── deploy.yml
+│   └── rollback.yml
+├── library/                 # 自定义模块
+│   └── check_port.py
+├── callback_plugins/        # 回调插件
+│   └── dingtalk.py
+└── files/                   # 静态文件
+# Structure by opsnot.com</code></pre>
+
+
+<h3 id="24">2.4 核心配置</h3>
+<pre class="codehilite"><code class="language-ini"># ansible.cfg - opsnot.com
+[defaults]
+inventory = ./inventory/prod
+host_key_checking = False
+forks = 50                    # 并发数
+gathering = smart             # 智能收集facts
+fact_caching = jsonfile
+fact_caching_connection = /tmp/ansible_facts
+fact_caching_timeout = 3600
+pipelining = True             # 减少SSH连接
+retry_files_enabled = False
+log_path = /var/log/ansible.log
+callback_whitelist = timer, profile_tasks, dingtalk  # 启用回调插件
+
+[ssh_connection]
+ssh_args = -o ControlMaster=auto -o ControlPersist=60s</code></pre>
+
+
+<h2 id="3-inventoryad-hoc">3. Inventory与Ad-Hoc命令</h2>
+<h3 id="31-inventory">3.1 静态Inventory</h3>
+<pre class="codehilite"><code class="language-ini"># inventory/prod
+[webservers]
+web01 ansible_host=192.168.1.10
+web02 ansible_host=192.168.1.11
+
+[dbservers]
+db01 ansible_host=192.168.1.20
+
+[webservers:vars]
+nginx_port=80
+
+[production:children]
+webservers
+dbservers
+
+[all:vars]
+ansible_user=deploy          # 使用普通用户
+ansible_become=yes           # 自动提权
+ansible_become_method=sudo
+# Managed by opsnot.com</code></pre>
+
+
+<h3 id="32-inventorycmdb">3.2 动态Inventory（对接CMDB）</h3>
+<pre class="codehilite"><code class="language-python">#!/usr/bin/env python3
+# inventory/cmdb.py - opsnot.com
+# 使用方法：chmod +x cmdb.py，然后在ansible.cfg中设置 inventory = ./inventory/cmdb.py
+
+import json
+import requests
+import sys
+
+def get_hosts():
+    try:
+        hosts = requests.get('http://cmdb.opsnot.com/api/hosts', timeout=5).json()
+    except Exception as e:
+        # 返回合法的空inventory，避免Ansible报错
+        print(json.dumps({'_meta': {'hostvars': {}}}), file=sys.stderr)
+        print(f&quot;CMDB连接失败: {e}&quot;, file=sys.stderr)
+        return {'_meta': {'hostvars': {}}}
+
+    inventory = {
+        'webservers': {'hosts': []},
+        'dbservers': {'hosts': []},
+        'all': {'hosts': []},
+        '_meta': {'hostvars': {}}
+    }
+
+    for h in hosts:
+        ip = h['ip']
+        inventory['all']['hosts'].append(ip)
+
+        if h['role'] == 'web':
+            inventory['webservers']['hosts'].append(ip)
+        elif h['role'] == 'db':
+            inventory['dbservers']['hosts'].append(ip)
+
+        inventory['_meta']['hostvars'][ip] = {
+            'ansible_host': ip,
+            'ansible_user': 'deploy'
+        }
+
+    return inventory
+
+if __name__ == '__main__':
+    print(json.dumps(get_hosts(), indent=2))
+    sys.exit(0)</code></pre>
+
+
+<h3 id="33-ad-hoc">3.3 Ad-Hoc命令</h3>
+<pre class="codehilite"><code class="language-bash"># 批量执行
+ansible all -m shell -a &quot;df -h | grep -v tmpfs&quot;
+ansible webservers -m systemd -a &quot;name=nginx state=restarted&quot;
+
+# 文件分发
+ansible webservers -m copy -a &quot;src=/tmp/nginx.conf dest=/etc/nginx/ backup=yes&quot;
+
+# 软件管理
+ansible all -m yum -a &quot;name=htop state=present&quot;
+
+# 查看facts
+ansible web01 -m setup -a &quot;filter=ansible_processor*&quot;</code></pre>
+
+
+<h2 id="4-playbook">4. Playbook核心语法</h2>
+<h3 id="41">4.1 基础结构</h3>
+<pre class="codehilite"><code class="language-yaml">---
+# deploy.yml - opsnot
+- name: 部署Web应用
+  hosts: webservers
+  become: yes
+  vars:
+    app_port: 8080
+
+  tasks:
+    - name: 安装Nginx
+      yum:
+        name: nginx
+        state: present
+
+    - name: 启动服务
+      systemd:
+        name: nginx
+        state: started
+        enabled: yes
+      notify: reload nginx
+
+  handlers:
+    - name: reload nginx
+      systemd:
+        name: nginx
+        state: reloaded</code></pre>
+
+
+<h3 id="42">4.2 条件、循环与变量</h3>
+<pre class="codehilite"><code class="language-yaml">---
+- name: 条件与循环
+  hosts: all
+  tasks:
+    # 条件判断
+    - name: CentOS安装
+      yum:
+        name: nginx
+        state: present
+      when: ansible_distribution == &quot;CentOS&quot;
+
+    # 循环处理
+    - name: 批量创建用户
+      user:
+        name: &quot;{{ item.name }}&quot;
+        uid: &quot;{{ item.uid }}&quot;
+      loop:
+        - { name: 'opsnot01', uid: 2001 }
+        - { name: 'opsnot02', uid: 2002 }
+      # opsnot - 批量管理
+
+# 变量优先级（从低到高）
+# role defaults &lt; inventory组变量 &lt; inventory主机变量 &lt; playbook vars &lt; task vars &lt; 命令行-e</code></pre>
+
+
+<h3 id="43-jinja2">4.3 Jinja2模板</h3>
+<pre class="codehilite"><code class="language-jinja2"># templates/nginx.conf.j2 - opsnot.com
+user {{ nginx_user }};
+worker_processes {{ ansible_processor_vcpus }};
+
+events {
+    worker_connections {{ worker_connections | default(1024) }};
+}
+
+http {
+    {% for host in virtual_hosts %}
+    server {
+        listen {{ host.port }};
+        server_name {{ host.domain }};
+        location / {
+            proxy_pass http://{{ host.backend }};
+        }
+    }
+    {% endfor %}
+}</code></pre>
+
+
+<h2 id="5-role">5. Role角色化管理</h2>
+<h3 id="51">5.1 标准结构</h3>
+<pre class="codehilite"><code class="language-bash">roles/nginx/
+├── defaults/main.yml        # 默认变量
+├── tasks/main.yml           # 任务列表
+├── handlers/main.yml        # 处理器
+├── templates/nginx.conf.j2  # 模板
+├── files/                   # 静态文件
+└── meta/main.yml            # 依赖关系</code></pre>
+
+
+<h3 id="52-role">5.2 Role示例</h3>
+<pre class="codehilite"><code class="language-yaml"># roles/nginx/tasks/main.yml
+---
+- name: 安装Nginx
+  yum:
+    name: nginx
+    state: present
+
+- name: 配置Nginx
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    validate: 'nginx -t -c %s'
+  notify: restart nginx
+  # opsnot - nginx role
+
+# roles/nginx/handlers/main.yml
+---
+- name: restart nginx
+  systemd:
+    name: nginx
+    state: restarted
+
+# roles/nginx/defaults/main.yml
+---
+nginx_port: 80
+nginx_user: www
+# Default by opsnot.com
+
+# 使用Role - site.yml
+---
+- name: 部署Web服务
+  hosts: webservers
+  roles:
+    - nginx
+    - { role: app, version: '2.0' }</code></pre>
+
+
+<h2 id="6">6. 生产实战：应用发布</h2>
+<pre class="codehilite"><code class="language-yaml"># playbooks/deploy.yml - opsnot
+---
+- name: 滚动发布应用
+  hosts: webservers
+  serial: 1                  # 一次一台，确保单台失败即停止
+
+  vars:
+    app_name: myapp
+    app_version: &quot;{{ version | default('latest') }}&quot;
+    deploy_dir: /opt/{{ app_name }}
+
+  tasks:
+    - name: 从LB摘除
+      uri:
+        url: &quot;http://lb.opsnot.com/api/remove/{{ inventory_hostname }}&quot;
+        method: POST
+      delegate_to: localhost
+
+    - name: 等待连接排空
+      wait_for:
+        timeout: 30
+
+    - name: 停止应用
+      systemd:
+        name: &quot;{{ app_name }}&quot;
+        state: stopped
+
+    - name: 备份当前版本
+      archive:
+        path: &quot;{{ deploy_dir }}&quot;
+        dest: &quot;/backup/{{ app_name }}_{{ ansible_date_time.epoch }}.tar.gz&quot;
+
+    - name: 部署新版本
+      get_url:
+        url: &quot;http://repo.opsnot.com/{{ app_name }}-{{ app_version }}.jar&quot;
+        dest: &quot;{{ deploy_dir }}/{{ app_name }}.jar&quot;
+        checksum: &quot;sha256:http://repo.opsnot.com/{{ app_name }}-{{ app_version }}.sha256&quot;
+
+    - name: 启动应用
+      systemd:
+        name: &quot;{{ app_name }}&quot;
+        state: started
+
+    - name: 健康检查
+      uri:
+        url: &quot;http://{{ ansible_host }}:8080/health&quot;
+        status_code: 200
+      retries: 10
+      delay: 3
+      until: result.status == 200
+      register: result
+
+    - name: 加入LB
+      uri:
+        url: &quot;http://lb.opsnot.com/api/add/{{ inventory_hostname }}&quot;
+        method: POST
+      delegate_to: localhost
+
+  rescue:
+    - name: 回滚
+      unarchive:
+        src: &quot;/backup/{{ app_name }}_latest.tar.gz&quot;
+        dest: &quot;{{ deploy_dir }}&quot;
+        remote_src: yes
+    - systemd:
+        name: &quot;{{ app_name }}&quot;
+        state: started</code></pre>
+
+
+<h2 id="7">7. 生产实战：服务器初始化</h2>
+<pre class="codehilite"><code class="language-yaml"># playbooks/init.yml
+---
+- name: 服务器标准化
+  hosts: new_servers
+  become: yes
+  # 注意：初始化阶段直接使用root或系统默认用户（如centos/ubuntu）
+  # 不指定become_user，等opsnot用户创建后再使用
+
+  tasks:
+    - name: 优化内核参数
+      sysctl:
+        name: &quot;{{ item.key }}&quot;
+        value: &quot;{{ item.value }}&quot;
+        sysctl_set: yes
+        reload: yes
+      loop:
+        - { key: 'net.ipv4.tcp_tw_reuse', value: '1' }
+        - { key: 'net.ipv4.tcp_fin_timeout', value: '30' }
+        - { key: 'net.core.somaxconn', value: '65535' }
+        - { key: 'fs.file-max', value: '655350' }
+
+    - name: 禁用SELinux（根据需求）
+      selinux:
+        state: disabled
+      when: ansible_selinux.status == &quot;enabled&quot;
+
+    - name: 配置时区
+      timezone:
+        name: Asia/Shanghai
+
+    - name: 创建运维用户
+      user:
+        name: opsnot
+        groups: wheel
+        shell: /bin/bash
+        password: &quot;{{ 'YourPassword' | password_hash('sha512') }}&quot;
+
+    - name: 配置SSH公钥
+      authorized_key:
+        user: opsnot
+        key: &quot;{{ lookup('file', 'files/opsnot.pub') }}&quot;
+
+    - name: 配置sudo权限
+      lineinfile:
+        path: /etc/sudoers.d/opsnot
+        line: &quot;opsnot ALL=(ALL) NOPASSWD: ALL&quot;
+        create: yes
+        mode: '0440'
+        validate: 'visudo -cf %s'</code></pre>
+
+
+<h2 id="8">8. 性能优化深度实践</h2>
+<h3 id="81">8.1 并发控制与连接复用</h3>
+<pre class="codehilite"><code class="language-ini"># ansible.cfg 性能优化配置 - opsnot.com
+[defaults]
+forks = 100                   # 根据控制机性能调整，建议CPU核数*10
+timeout = 30
+host_key_checking = False
+gathering = smart
+fact_caching = jsonfile
+fact_caching_connection = /tmp/ansible_facts
+fact_caching_timeout = 86400  # 24小时缓存
+pipelining = True             # 关键：减少SSH往返次数
+poll_interval = 5
+
+[ssh_connection]
+ssh_args = -o ControlMaster=auto -o ControlPersist=3600s -o PreferredAuthentications=publickey
+control_path = /tmp/ansible-ssh-%%h-%%p-%%r
+pipelining = True</code></pre>
+
+
+<h3 id="82-facts">8.2 Facts收集优化</h3>
+<pre class="codehilite"><code class="language-yaml"># 完全禁用facts（最快）
+- name: 无需facts的任务
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: 简单命令
+      shell: uptime
+
+# 只收集必要的facts
+- name: 按需收集facts
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: 只收集网络和硬件信息
+      setup:
+        gather_subset:
+          - '!all'          # 排除所有
+          - '!any'          # 排除默认
+          - 'network'       # 只要网络
+          - 'hardware'      # 只要硬件
+        filter:
+          - 'ansible_eth*'  # 只要eth开头的网卡
+          - 'ansible_processor*'
+
+# 使用facts缓存（推荐）
+- name: 利用缓存的facts
+  hosts: all
+  gather_facts: yes           # 首次收集
+  tasks:
+    - debug:
+        msg: &quot;{{ ansible_processor_vcpus }}&quot;
+
+# 注意：关闭gather_facts后，模板中使用的ansible_*变量将不可用
+# 需手动setup或通过其他方式提供</code></pre>
+
+
+<h3 id="83">8.3 异步任务与并行执行</h3>
+<pre class="codehilite"><code class="language-yaml">---
+# 异步执行长任务 - opsnot
+- name: 异步任务示例
+  hosts: all
+  tasks:
+    # 启动多个异步任务
+    - name: 异步执行备份
+      shell: /opt/scripts/backup.sh
+      async: 3600              # 最长运行1小时
+      poll: 0                  # 不等待，立即返回
+      register: backup_job
+
+    - name: 异步执行日志归档
+      shell: /opt/scripts/archive_logs.sh
+      async: 1800
+      poll: 0
+      register: archive_job
+
+    # 继续执行其他任务
+    - name: 其他任务不受阻塞
+      debug:
+        msg: &quot;备份和归档在后台运行&quot;
+
+    # 最后检查所有异步任务状态
+    - name: 检查备份任务
+      async_status:
+        jid: &quot;{{ backup_job.ansible_job_id }}&quot;
+      register: backup_result
+      until: backup_result.finished
+      retries: 120
+      delay: 30
+
+    - name: 检查归档任务
+      async_status:
+        jid: &quot;{{ archive_job.ansible_job_id }}&quot;
+      register: archive_result
+      until: archive_result.finished
+      retries: 60
+      delay: 30
+
+# 使用strategy加速
+- name: 并行策略
+  hosts: all
+  strategy: free               # 各主机独立执行，不等待慢节点
+  tasks:
+    - name: 安装软件
+      yum:
+        name: &quot;{{ item }}&quot;
+        state: present
+      loop:
+        - nginx
+        - redis
+        - mysql</code></pre>
+
+
+<h3 id="84">8.4 批量操作优化</h3>
+<pre class="codehilite"><code class="language-yaml">---
+# 使用with_items优化循环
+- name: 批量安装优化
+  hosts: all
+  tasks:
+    # 不推荐：多次调用包管理器
+    - name: 逐个安装（慢）
+      yum:
+        name: &quot;{{ item }}&quot;
+        state: present
+      loop:
+        - nginx
+        - redis
+        - mysql
+
+    # 推荐：一次性安装
+    - name: 批量安装（快）
+      yum:
+        name:
+          - nginx
+          - redis
+          - mysql
+        state: present
+
+# 使用mitogen加速（第三方插件）
+# 注意：Mitogen仅兼容Ansible ≤2.14，Ansible 2.15+已移除原生支持
+# pip install mitogen
+# ansible.cfg中添加：
+# strategy_plugins = /path/to/mitogen/ansible_mitogen/plugins/strategy
+# strategy = mitogen_linear</code></pre>
+
+
+<h3 id="85">8.5 模板渲染优化</h3>
+<pre class="codehilite"><code class="language-yaml">---
+- name: 模板优化
+  hosts: webservers
+  tasks:
+    # 避免在循环中使用template（慢）
+    - name: 不推荐
+      template:
+        src: config.j2
+        dest: &quot;/etc/app/{{ item }}.conf&quot;
+      loop: &quot;{{ servers }}&quot;
+
+    # 推荐：一次渲染，包含所有配置
+    - name: 推荐
+      template:
+        src: all_configs.j2
+        dest: /etc/app/config.conf
+      vars:
+        all_servers: &quot;{{ servers }}&quot;</code></pre>
+
+
+<h3 id="86">8.6 降低日志输出</h3>
+<pre class="codehilite"><code class="language-yaml">---
+- name: 减少日志输出
+  hosts: all
+  tasks:
+    - name: 不记录敏感输出
+      shell: some_command
+      no_log: true             # 不记录输出到日志
+
+    - name: 简化输出
+      command: long_command
+      changed_when: false      # 不报告changed状态
+      failed_when: false       # 不报告失败</code></pre>
+
+
+<h3 id="87-profile">8.7 使用Profile分析性能</h3>
+<pre class="codehilite"><code class="language-bash"># 启用profile_tasks插件（已在ansible.cfg中配置）
+# 执行playbook会自动显示每个任务耗时
+
+ansible-playbook deploy.yml
+
+# 输出示例：
+# TASK [安装Nginx] ********************************
+# ok: [web01]
+# Tuesday 27 December 2025  10:30:45 +0800 (0:00:05.234)
+# 
+# PLAY RECAP ***********************************
+# Playbook run took 0 days, 0 hours, 2 minutes, 15 seconds</code></pre>
+
+
+<h2 id="9">9. 安全加固</h2>
+<h3 id="91-vault">9.1 Vault加密敏感信息</h3>
+<pre class="codehilite"><code class="language-bash"># 创建加密文件 - opsnot
+ansible-vault create group_vars/all/vault.yml
+
+# 编辑加密文件
+ansible-vault edit group_vars/all/vault.yml
+
+# 加密现有文件
+ansible-vault encrypt vars/database.yml
+
+# 查看加密文件
+ansible-vault view group_vars/all/vault.yml
+
+# 修改密码
+ansible-vault rekey group_vars/all/vault.yml
+
+# 使用密码文件（推荐生产环境）
+echo &quot;your_vault_password&quot; &gt; ~/.vault_pass
+chmod 600 ~/.vault_pass
+ansible-playbook deploy.yml --vault-password-file ~/.vault_pass</code></pre>
+
+
+<pre class="codehilite"><code class="language-yaml"># group_vars/all/vault.yml（加密内容）
+vault_db_password: &quot;SuperSecret123&quot;
+vault_api_key: &quot;sk-xxxxxxxxxxxxx&quot;
+vault_ssh_password: &quot;Passw0rd!&quot;
+
+# group_vars/all/vars.yml（引用加密变量）
+db_password: &quot;{{ vault_db_password }}&quot;
+api_key: &quot;{{ vault_api_key }}&quot;</code></pre>
+
+
+<h3 id="92">9.2 权限最小化</h3>
+<pre class="codehilite"><code class="language-yaml">---
+- name: 使用专用用户部署
+  hosts: all
+  become: yes
+  become_user: deploy        # 指定非root用户
+  become_method: sudo
+
+  tasks:
+    - name: 配置最小sudo权限
+      lineinfile:
+        path: /etc/sudoers.d/deploy
+        line: &quot;{{ item }}&quot;
+        create: yes
+        mode: '0440'
+        validate: 'visudo -cf %s'
+      loop:
+        - &quot;deploy ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart nginx&quot;
+        - &quot;deploy ALL=(ALL) NOPASSWD: /usr/bin/systemctl reload nginx&quot;
+        - &quot;deploy ALL=(ALL) NOPASSWD: /usr/bin/systemctl status nginx&quot;
+      # 只授予必要的systemctl权限 - opsnot.com</code></pre>
+
+
+<h3 id="93">9.3 敏感数据不记录日志</h3>
+<pre class="codehilite"><code class="language-yaml">---
+- name: 处理敏感数据
+  hosts: all
+  tasks:
+    - name: 设置数据库密码
+      mysql_user:
+        name: app
+        password: &quot;{{ db_password }}&quot;
+      no_log: true             # 不记录到日志
+      # 💡 生产环境启用no_log，开发/测试环境可临时关闭便于调试
+
+    - name: 调用API
+      uri:
+        url: https://api.example.com
+        headers:
+          Authorization: &quot;Bearer {{ api_token }}&quot;
+      no_log: true</code></pre>
+
+
+<h2 id="10">10. 调试与错误处理</h2>
+<h3 id="101">10.1 调试命令</h3>
+<pre class="codehilite"><code class="language-bash"># 语法检查
+ansible-playbook deploy.yml --syntax-check
+
+# 模拟运行（不实际执行）
+ansible-playbook deploy.yml --check --diff
+
+# 列出受影响主机
+ansible-playbook deploy.yml --list-hosts
+
+# 列出所有任务
+ansible-playbook deploy.yml --list-tasks
+
+# 列出所有标签
+ansible-playbook deploy.yml --list-tags
+
+# 从指定任务开始
+ansible-playbook deploy.yml --start-at-task=&quot;启动应用&quot;
+
+# 单步执行
+ansible-playbook deploy.yml --step
+
+# 详细输出 - opsnot
+ansible-playbook deploy.yml -v     # 基本信息
+ansible-playbook deploy.yml -vv    # 详细信息
+ansible-playbook deploy.yml -vvv   # 连接调试
+ansible-playbook deploy.yml -vvvv  # SSH详细
+
+# 只执行指定标签
+ansible-playbook deploy.yml --tags=&quot;deploy,restart&quot;
+
+# 跳过指定标签
+ansible-playbook deploy.yml --skip-tags=&quot;backup&quot;
+
+# 限制执行主机
+ansible-playbook deploy.yml --limit=&quot;web01,web02&quot;</code></pre>
+
+
+<h3 id="102-playbook">10.2 Playbook内调试</h3>
+<pre class="codehilite"><code class="language-yaml">---
+- name: 调试技巧
+  hosts: all
+  tasks:
+    # 打印变量
+    - debug:
+        var: ansible_facts
+        verbosity: 2           # 需要-vv才显示
+
+    - debug:
+        msg: &quot;主机: {{ inventory_hostname }}, IP: {{ ansible_host }}&quot;
+
+    # 条件断言
+    - assert:
+        that:
+          - ansible_distribution == &quot;CentOS&quot;
+          - ansible_distribution_major_version &gt;= &quot;7&quot;
+          - ansible_memtotal_mb &gt;= 4096
+        fail_msg: &quot;系统不满足要求&quot;
+        success_msg: &quot;系统检查通过&quot;
+
+    # 暂停执行
+    - pause:
+        prompt: &quot;即将执行危险操作，确认后按回车继续&quot;
+        seconds: 10            # 或自动等待10秒
+
+    # 失败继续
+    - command: /opt/scripts/may_fail.sh
+      ignore_errors: yes       # 失败也继续
+      register: result
+
+    - debug:
+        msg: &quot;命令执行失败: {{ result.stderr }}&quot;
+      when: result.failed</code></pre>
+
+
+<h3 id="103">10.3 错误处理与回滚</h3>
+<pre class="codehilite"><code class="language-yaml">---
+- name: 完整错误处理
+  hosts: webservers
+  tasks:
+    - block:
+        - name: 尝试部署
+          command: /opt/scripts/deploy.sh
+          register: deploy_result
+
+        - name: 验证部署
+          uri:
+            url: &quot;http://localhost:8080/health&quot;
+            status_code: 200
+
+      rescue:
+        - name: 部署失败，执行回滚
+          command: /opt/scripts/rollback.sh
+          register: rollback_result
+
+        - name: 发送告警邮件
+          mail:
+            host: smtp.opsnot.com
+            port: 587
+            username: alert@opsnot.com
+            password: &quot;{{ vault_smtp_password }}&quot;
+            to: ops@opsnot.com
+            subject: &quot;部署失败告警 - {{ inventory_hostname }}&quot;
+            body: |
+              部署失败详情:
+              主机: {{ inventory_hostname }}
+              错误: {{ deploy_result.stderr }}
+              回滚: {{ rollback_result.stdout }}
+
+        - name: 钉钉通知
+          uri:
+            url: &quot;https://oapi.dingtalk.com/robot/send?access_token={{ dingtalk_token }}&quot;
+            method: POST
+            body_format: json
+            body:
+              msgtype: &quot;text&quot;
+              text:
+                content: &quot;Ansible部署失败\n主机: {{ inventory_hostname }}\n时间: {{ ansible_date_time.iso8601 }}&quot;
+
+      always:
+        - name: 清理临时文件
+          file:
+            path: &quot;{{ item }}&quot;
+            state: absent
+          loop:
+            - /tmp/deploy_*
+            - /tmp/rollback_*
+
+        - name: 记录审计日志
+          lineinfile:
+            path: /var/log/ansible_audit.log
+            line: &quot;{{ ansible_date_time.iso8601 }} | {{ ansible_user_id }} | {{ inventory_hostname }} | deploy | {{ 'success' if deploy_result.rc == 0 else 'failed' }}&quot;
+            create: yes</code></pre>
+
+
+<h2 id="11_1">11. 高级技巧</h2>
+<h3 id="111">11.1 保证幂等性</h3>
+<pre class="codehilite"><code class="language-yaml"># 错误示例（非幂等）
+- name: 不要这样做
+  shell: echo &quot;config=value&quot; &gt;&gt; /etc/app.conf
+
+# 正确示例（幂等）
+- name: 推荐做法
+  lineinfile:
+    path: /etc/app.conf
+    line: &quot;config=value&quot;
+    regexp: '^config='         # YAML中建议用引号
+    state: present</code></pre>
+
+
+<h3 id="112">11.2 循环与条件的组合</h3>
+<pre class="codehilite"><code class="language-yaml">---
+- name: 循环条件示例
+  hosts: all
+  tasks:
+    # when在task级别 - 整个任务判断一次
+    - name: CentOS专用
+      yum:
+        name: &quot;{{ item }}&quot;
+        state: present
+      loop: [gcc, make, git]
+      when: ansible_distribution == &quot;CentOS&quot;
+
+    # when在item级别 - 每个item判断一次
+    - name: 条件安装
+      yum:
+        name: &quot;{{ item.name }}&quot;
+        state: present
+      loop:
+        - { name: 'nginx', install: true, env: 'prod' }
+        - { name: 'apache', install: false, env: 'test' }
+        - { name: 'redis', install: true, env: 'prod' }
+      when: 
+        - item.install
+        - item.env == env_type</code></pre>
+
+
+<h3 id="113">11.3 自定义模块</h3>
+<pre class="codehilite"><code class="language-python">#!/usr/bin/python
+# library/check_port.py - opsnot.com
+# 将此文件放在项目根目录的library/文件夹中，Ansible会自动加载
+
+from ansible.module_utils.basic import AnsibleModule
+import socket
+
+def check_port(host, port):
+    &quot;&quot;&quot;检查端口是否开放&quot;&quot;&quot;
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(2)
+    result = sock.connect_ex((host, port))
+    sock.close()
+    return result == 0
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            host=dict(required=True, type='str'),
+            port=dict(required=True, type='int'),
+            timeout=dict(required=False, type='int', default=2)
+        ),
+        supports_check_mode=True
+    )
+
+    host = module.params['host']
+    port = module.params['port']
+
+    if module.check_mode:
+        module.exit_json(changed=False, msg=&quot;Check mode&quot;)
+
+    is_open = check_port(host, port)
+
+    if is_open:
+        module.exit_json(
+            changed=False,
+            msg=f&quot;Port {port} on {host} is open&quot;,
+            port=port,
+            host=host,
+            status='open'
+        )
+    else:
+        module.fail_json(
+            msg=f&quot;Port {port} on {host} is closed&quot;,
+            port=port,
+            host=host,
+            status='closed'
+        )
+
+if __name__ == '__main__':
+    main()</code></pre>
+
+
+<p>使用自定义模块：</p>
+<pre class="codehilite"><code class="language-yaml">---
+- name: 使用自定义模块
+  hosts: all
+  tasks:
+    - name: 检查MySQL端口
+      check_port:
+        host: &quot;{{ ansible_host }}&quot;
+        port: 3306
+      register: mysql_port
+
+    - debug:
+        msg: &quot;MySQL端口状态: {{ mysql_port.status }}&quot;</code></pre>
+
+
+<h3 id="114">11.4 钉钉通知插件</h3>
+<pre class="codehilite"><code class="language-python"># callback_plugins/dingtalk.py
+# 在ansible.cfg中添加: callback_whitelist = dingtalk
+from ansible.plugins.callback import CallbackBase
+import requests
+import json
+import os
+
+class CallbackModule(CallbackBase):
+    &quot;&quot;&quot;
+    钉钉通知插件 - opsnot.com
+    使用方法：export DINGTALK_WEBHOOK=&quot;https://oapi.dingtalk.com/robot/send?access_token=YOUR_TOKEN&quot;
+    &quot;&quot;&quot;
+    CALLBACK_VERSION = 2.0
+    CALLBACK_TYPE = 'notification'
+    CALLBACK_NAME = 'dingtalk'
+
+    def __init__(self):
+        super(CallbackModule, self).__init__()
+        # 从环境变量读取webhook，避免硬编码
+        self.webhook = os.getenv('DINGTALK_WEBHOOK', '')
+        self.disabled = not self.webhook
+
+        if self.disabled:
+            self._display.warning(&quot;钉钉webhook未配置，通知功能已禁用&quot;)
+
+    def send_msg(self, msg):
+        &quot;&quot;&quot;发送钉钉消息&quot;&quot;&quot;
+        if self.disabled:
+            return
+
+        try:
+            data = {
+                &quot;msgtype&quot;: &quot;markdown&quot;,
+                &quot;markdown&quot;: {
+                    &quot;title&quot;: &quot;Ansible执行通知&quot;,
+                    &quot;text&quot;: f&quot;### Ansible通知\n{msg}\n\n&gt; opsnot.com&quot;
+                }
+            }
+            requests.post(self.webhook, json=data, timeout=5)
+        except Exception as e:
+            self._display.warning(f&quot;钉钉通知失败: {e}&quot;)
+
+    def v2_playbook_on_start(self, playbook):
+        &quot;&quot;&quot;Playbook开始&quot;&quot;&quot;
+        msg = f&quot;**Playbook启动**\n\n- 文件: {playbook._file_name}&quot;
+        self.send_msg(msg)
+
+    def v2_playbook_on_stats(self, stats):
+        &quot;&quot;&quot;Playbook结束&quot;&quot;&quot;
+        hosts = sorted(stats.processed.keys())
+        summary = []
+
+        for h in hosts:
+            s = stats.summarize(h)
+            summary.append(
+                f&quot;- {h}: ✅{s['ok']} ❌{s['failures']} ⚠️{s['changed']}&quot;
+            )
+
+        msg = f&quot;**Playbook完成**\n\n{''.join(summary)}&quot;
+        self.send_msg(msg)</code></pre>
+
+
+<h3 id="115-tags">11.5 使用Tags组织任务</h3>
+<pre class="codehilite"><code class="language-yaml">---
+- name: 完整部署流程
+  hosts: webservers
+  tasks:
+    - name: 备份数据
+      archive:
+        path: /opt/app
+        dest: /backup/app-{{ ansible_date_time.date }}.tar.gz
+      tags:
+        - backup
+        - pre-deploy
+
+    - name: 停止服务
+      systemd:
+        name: app
+        state: stopped
+      tags:
+        - deploy
+        - stop
+
+    - name: 部署应用
+      copy:
+        src: app.tar.gz
+        dest: /opt/app/
+      tags:
+        - deploy
+
+    - name: 启动服务
+      systemd:
+        name: app
+        state: started
+      tags:
+        - deploy
+        - start
+
+    - name: 验证部署
+      uri:
+        url: http://localhost:8080/health
+      tags:
+        - deploy
+        - verify
+        - always          # 总是执行
+
+    - name: 清理旧备份
+      shell: find /backup -name &quot;app-*&quot; -mtime +7 -delete
+      tags:
+        - cleanup
+        - never           # 默认不执行
+
+# 使用方式：
+# ansible-playbook deploy.yml --tags=&quot;deploy&quot;        # 只执行部署
+# ansible-playbook deploy.yml --tags=&quot;backup,deploy&quot; # 备份+部署
+# ansible-playbook deploy.yml --skip-tags=&quot;backup&quot;   # 跳过备份
+# ansible-playbook deploy.yml --tags=&quot;never,cleanup&quot; # 执行清理</code></pre>
+
+
+<h3 id="116">11.6 变量文件加载策略</h3>
+<pre class="codehilite"><code class="language-yaml">---
+- name: 多环境变量管理
+  hosts: &quot;{{ env }}&quot;
+  vars_files:
+    - &quot;vars/common.yml&quot;
+    - &quot;vars/{{ env }}.yml&quot;      # 根据环境加载不同配置
+    - &quot;vars/secrets.yml&quot;
+
+  tasks:
+    - name: 显示环境
+      debug:
+        msg: &quot;当前环境: {{ env }}, 数据库: {{ db_host }}&quot;
+
+# 执行：ansible-playbook deploy.yml -e &quot;env=production&quot;</code></pre>
+
+
+<h3 id="117">11.7 使用委托和本地执行</h3>
+<pre class="codehilite"><code class="language-yaml">---
+- name: 委托任务
+  hosts: webservers
+  tasks:
+    # 在控制节点执行
+    - name: 从控制节点下载文件
+      get_url:
+        url: http://repo.opsnot.com/app.tar.gz
+        dest: /tmp/app.tar.gz
+      delegate_to: localhost
+      run_once: true           # 只执行一次
+
+    # 在特定主机执行
+    - name: 更新数据库
+      mysql_db:
+        name: myapp
+        state: present
+      delegate_to: &quot;{{ groups['dbservers'][0] }}&quot;
+      run_once: true
+
+    # 本地操作
+    - name: 本地命令
+      local_action:
+        module: command
+        cmd: echo &quot;部署到 {{ inventory_hostname }}&quot;</code></pre>
+
+
+<h3 id="118">11.8 常见问题排查</h3>
+<p><strong>问题1：SSH连接超时</strong></p>
+<pre class="codehilite"><code class="language-bash"># 检查SSH配置
+ansible all -m ping -vvv
+
+# 临时增加超时时间
+ansible all -m ping -T 60
+
+# 或修改ansible.cfg
+[defaults]
+timeout = 60</code></pre>
+
+
+<p><strong>问题2：Facts收集慢</strong></p>
+<pre class="codehilite"><code class="language-yaml"># 关闭facts或使用缓存
+- hosts: all
+  gather_facts: no
+  # 或
+  gather_facts: yes  # 配合fact_caching使用</code></pre>
+
+
+<p><strong>问题3：变量未定义</strong></p>
+<pre class="codehilite"><code class="language-yaml"># 使用default过滤器
+- debug:
+    msg: &quot;{{ some_var | default('默认值') }}&quot;
+
+# 或使用defined测试
+- debug:
+    msg: &quot;{{ some_var }}&quot;
+  when: some_var is defined</code></pre>
+
+
+<p><strong>问题4：Handler未触发</strong></p>
+<pre class="codehilite"><code class="language-yaml"># Handler只在任务changed时触发
+# 强制触发可以用meta
+- meta: flush_handlers</code></pre>
+
+
+<p><strong>问题5：权限问题</strong></p>
+<pre class="codehilite"><code class="language-yaml"># 确保become配置正确
+- name: 需要root权限的任务
+  command: systemctl restart nginx
+  become: yes
+  become_method: sudo
+  become_user: root</code></pre>
+
+
+<h2 id="_1">总结</h2>
+<p>Ansible入门门槛较低，但功能强大，经久不衰，实为自动化运维之利器。尤其以下几点，深受运维伙伴们喜爱<br>
+- <strong>简单</strong>：SSH + YAML，学习成本低<br>
+- <strong>无侵入</strong>：无需agent，即用即走<br>
+- <strong>幂等性</strong>：多次执行结果一致<br>
+- <strong>可扩展</strong>：模块、插件、动态Inventory<br></p>
+<p>自动化是为了解放双手，同时安全、够用、稳定、可维护乃是根本，掌握这篇，运维自动化之路更加游刃有余</p>
+<p>更多linux运维强大工具技巧，请看往期文章：<br>
+<a href="https://blog.opsnot.com/tech/strace-guide-system-call-tracing.html" target="_blank">Strace命令，Linux系统调用追踪神器！</a><br>
+<a href="https://blog.opsnot.com/tech/shell-command-line-expansion.html" target="_blank">运维拿手绝活之 - Shell命令行展开实战手册</a><br>
+<a href="https://blog.opsnot.com/tech/understanding-lsof-and-file-descriptors-in-linux.html" target="_blank">追踪打开文件的瑞士军刀 - lsof 运维实操手册</a><br>
+<a href="https://blog.opsnot.com/tech/tcpdump-guide-network-troubleshooting.html" target="_blank">运维火眼金睛之 - tcpdump抓包实操手册</a></p>
+<blockquote>
+<p>本文由 opsnot.com 整理，转载请注明出处，喜欢就关注一下吧！</p>
+</blockquote>
+
+        <div>
+          <ul style="display: inline-block;padding: 0;margin: 0 0 0.5em;color: #999;">
+            <li style="display: inline-block;margin: 0 1em 0 0;"><a href="/tech/ansible-overview-and-best-practices.html">📅 2025-12-27</a></li>
+          </ul>
+        </div>
+
+        <hr>
+
+        <div class="pagination">
+            <a href="https://blog.opsnot.com/tech/direct-k8s-api-operations.html" class="pagination-item prev-page">
+                <span class="pagination-arrow">←</span>
+                <span class="pagination-text">上一篇：<br>绕过kubectl，直接操作K8s API的正确姿势！</span>
+            </a>
+            <a href="/archive.html" class="pagination-item next-page">
+                <span class="pagination-text">下一篇：<br>文章列表</span>
+                <span class="pagination-arrow">→</span>
+            </a>
+        </div>
+
+        
+
+        
+
+        <div class="nav-cell">
+            <p class="nav-list-title">能看到这里一定是真爱，订阅一下吧</p>
+            <img alt="" loading="lazy" src="/static/images/wx.sou1.png" />
+        </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="copy"> © opsnot</div>
+
+      <div class="link">
+        <a href="/comments.html" title="给我留言" target="_blank">留言</a>
+        <a href="/friends.html" title="友情链接" target="_blank">友链</a>
+      </div>
+    </div>
+  </footer>
+  
+  <script defer src="https://umami.opsnot.com/script.js" data-website-id="b1df419f-de4e-4b55-82fc-2aebae58afc7"></script>
+</body>
+</html>
