@@ -1,5 +1,12 @@
 [
   {
+    "url": "https://blog.opsnot.com/tech/ansible-overview-and-best-practices.html",
+    "title": "运维自动化利器之 - Ansible实战指南",
+    "content": "本文详细介绍了Ansible的三大优势、核心组件、安装配置、SSH免密配置、标准目录结构、Playbook语法、Role角色化管理及性能优化等，帮助你掌握Ansible自动化运维的最佳实践。",
+    "keywords": "Ansible概览, 自动化运维, Ansible优势, Ansible安装, SSH免密配置, Ansible目录结构, Ansible Playbook, Ansible Role, Ansible性能优化, Ansible安全加固, Ansible调试",
+    "date": "2025-12-27"
+  },
+  {
     "url": "https://blog.opsnot.com/tech/direct-k8s-api-operations.html",
     "title": "绕过kubectl，直接操作K8s API的正确姿势！",
     "content": "直接操作Kubernetes API可以显著提升性能和灵活性，减少中间层，支持并发和流式处理。在CI/CD、自定义控制器和监控等场景下，直接调用API是更优选择。",

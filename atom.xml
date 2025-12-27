@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
   <id>https://blog.opsnot.com</id>
   <title>运维不加班</title>
-  <updated>2025-11-23T15:28:46.028428+08:00</updated>
+  <updated>2025-12-27T21:12:24.632250+08:00</updated>
   <author>
     <name>运维不加班</name>
   </author>
@@ -10,6 +10,14 @@
   <link href="https://blog.opsnot.com/atom.xml" rel="self"/>
   <generator>Custom CMS v1.0</generator>
   <subtitle>运维不加班 的个人博客，欢迎订阅。</subtitle>
+  <entry>
+    <id>https://blog.opsnot.com/tech/ansible-overview-and-best-practices.html</id>
+    <title>运维自动化利器之 - Ansible实战指南</title>
+    <updated>2025-12-27T21:12:24.632250+08:00</updated>
+    <link href="https://blog.opsnot.com/tech/ansible-overview-and-best-practices.html"/>
+    <summary>本文详细介绍了Ansible的三大优势、核心组件、安装配置、SSH免密配置、标准目录结构、Playbook语法、Role角色化管理及性能优化等，帮助你掌握Ansible自动化运维的最佳实践。</summary>
+    <published>2025-12-27T21:10:50.446642+08:00</published>
+  </entry>
   <entry>
     <id>https://blog.opsnot.com/tech/direct-k8s-api-operations.html</id>
     <title>绕过kubectl，直接操作K8s API的正确姿势！</title>

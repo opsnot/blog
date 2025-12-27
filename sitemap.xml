@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
  <loc>https://blog.opsnot.com</loc>
- <lastmod>2025-11-23</lastmod>
+ <lastmod>2025-12-27</lastmod>
 </url>
 <url>
  <loc>https://blog.opsnot.com/friends.html</loc>
@@ -19,6 +19,10 @@
 <url>
  <loc>https://blog.opsnot.com/life/index.html</loc>
  <lastmod>2025-10-25</lastmod>
+</url>
+<url>
+ <loc>https://blog.opsnot.com/tech/ansible-overview-and-best-practices.html</loc>
+ <lastmod>2025-12-27</lastmod>
 </url>
 <url>
  <loc>https://blog.opsnot.com/tech/direct-k8s-api-operations.html</loc>

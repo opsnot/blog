@@ -8,7 +8,14 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>Custom CMS v1.0</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 23 Nov 2025 15:28:46 +0800</lastBuildDate>
+    <lastBuildDate>Sat, 27 Dec 2025 21:12:24 +0800</lastBuildDate>
+    <item>
+      <title>运维自动化利器之 - Ansible实战指南</title>
+      <link>https://blog.opsnot.com/tech/ansible-overview-and-best-practices.html</link>
+      <description>本文详细介绍了Ansible的三大优势、核心组件、安装配置、SSH免密配置、标准目录结构、Playbook语法、Role角色化管理及性能优化等，帮助你掌握Ansible自动化运维的最佳实践。</description>
+      <guid isPermaLink="false">https://blog.opsnot.com/tech/ansible-overview-and-best-practices.html</guid>
+      <pubDate>Sat, 27 Dec 2025 21:10:50 +0800</pubDate>
+    </item>
     <item>
       <title>绕过kubectl，直接操作K8s API的正确姿势！</title>
       <link>https://blog.opsnot.com/tech/direct-k8s-api-operations.html</link>
